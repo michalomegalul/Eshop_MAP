@@ -23,11 +23,6 @@ def create_app():
 
     app.register_blueprint(api_bp, url_prefix="/api")
 
-    from .tasks import start_scheduler, stop_scheduler
-
-    if app.config["START_SCHEDULER_ON_STARTUP"]:
-        start_scheduler(app)
-    atexit.register(stop_scheduler)
 
     @app.route("/site-map")
     def site_map():

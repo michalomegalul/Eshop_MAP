@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  web:  # Renamed service to "web"
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app
+    environment:
+      - FLASK_ENV=development
+      - DATABASE_URL=postgresql://user:password@db:5432/product_db
+      - OFFERS_SERVICE_URL=https://python.exercise.applifting.cz/api/v1
+      - REFRESH_TOKEN=reff
+      - FLASK_RUN_HOST=0.0.0.0
+      - FLASK_RUN_PORT=5000
+      - FLASK_DEBUG=true
+      - API_BASE_URL=http://0.0.0.0:5000/api
+      - DATABASE_URL_LOCAL=postgresql://user:password@0.0.0.0:5437/product_db
+      - START_SCHEDULER_ON_STARTUP = False
+    depends_on:
+      - db
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 60s
+      retries: 3
+    # command: >
+
+    #   #!/bin/sh
+    #   poetry run flask db upgrade &&
+    #   exec poetry run gunicorn -b :5000 --access-logfile - --error-logfile - "app:app"
+  db:
+    image: postgres:13
+    restart: always
+    environment:
+      POSTGRES_USER: 'user'
+      POSTGRES_PASSWORD: 'password'
+      POSTGRES_DB: 'product_db'
+    ports:
+      - "5437:5432"
+
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: 'email@email.com'
+      PGADMIN_DEFAULT_PASSWORD: 'password'
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./prometheus:/etc/prometheus
+    ports:
+      - 9090:9090
+
+  grafana:
+    image: grafana/grafana
+    volumes:
+      - ./grafana:/var/lib/grafana
+    ports:
+      - 3000:3000
+    depends_on:
+      - prometheus
+volumes:
+  pgadmin_data:
+  prometheus:
+  grafana:
