@@ -1,6 +1,6 @@
 import atexit
 from flask import Flask, url_for
-from flask_migrate import Migrate
+from flask_migrate import Migrate, upgrade
 from .models import db
 
 
@@ -14,15 +14,23 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object("config.Config")
     print(app.config)
+
     db.init_app(app)
-
     Migrate(app, db)
-    print("DB INITIALIZED miggratios")
+    print("DB INITIALIZED migrations")
 
+    # Run migrations on startup
+    with app.app_context():
+        try:
+            upgrade()
+            print("Database migrations applied successfully.")
+        except Exception as e:
+            print(f"Failed to apply migrations: {e}")
+
+
+    # Register the blueprint
     from .views import api_bp
-
     app.register_blueprint(api_bp, url_prefix="/api")
-
 
     @app.route("/site-map")
     def site_map():

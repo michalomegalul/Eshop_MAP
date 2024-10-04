@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime, date
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import CheckConstraint
 from typing import TYPE_CHECKING
 
 db = SQLAlchemy()
@@ -202,22 +203,29 @@ class AuditLog(Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
 
-class Coupon(Model):
-    __tablename__ = "coupons"
-
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    code = db.Column(db.String(120), unique=True, nullable=False)
-    discount_percent = db.Column(db.Integer, nullable=False, check="discount_percent > 0 AND discount_percent <= 100")
-    expiration_date = db.Column(db.Date, nullable=False)
-    is_active = db.Column(db.Boolean, nullable=False, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
-class OrderCoupon(Model):
-    __tablename__ = "order_coupons"
+# class Coupon(Model):
+#     __tablename__ = "coupons"
 
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    order_id = db.Column(UUID(as_uuid=True), db.ForeignKey("orders.id"), nullable=False)
-    coupon_id = db.Column(UUID(as_uuid=True), db.ForeignKey("coupons.id"), nullable=False)
-    applied_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+#     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+#     code = db.Column(db.String(120), unique=True, nullable=False)
+#     discount_percent = db.Column(db.Integer, nullable=False)
+#     expiration_date = db.Column(db.Date, nullable=False)
+#     is_active = db.Column(db.Boolean, nullable=False, default=True)
+#     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+#     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+#     __table_args__ = (
+#         CheckConstraint('discount_percent > 0 AND discount_percent <= 100', name='check_discount_percent'),
+#     )
+
+
+
+# class OrderCoupon(Model):
+#     __tablename__ = "order_coupons"
+
+#     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+#     order_id = db.Column(UUID(as_uuid=True), db.ForeignKey("orders.id"), nullable=False)
+#     coupon_id = db.Column(UUID(as_uuid=True), db.ForeignKey("coupons.id"), nullable=False)
+#     applied_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)

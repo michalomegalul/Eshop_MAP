@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "applifting-trainee"
+name = "Eshop_MAP"
 version = "0.1.0"
 description = ""
 authors = ["michalomegalul <dog560154@gmail.com>"]
@@ -13,6 +13,7 @@ psycopg2-binary = "^2.9.9"
 requests = "^2.32.2"
 python-dotenv = "^1.0.1"
 gunicorn = "^22.0.0"
+importlib-metadata = "^8.5.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^8.2.1"
