@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request, current_app
-from .models import db, User, Product, Order, ProductReview #, Coupon
+from .models import db, User, Product, Order, ProductReview, Category #, Coupon
 import logging
 
 logger = logging.getLogger(__name__)
@@ -10,6 +10,13 @@ api_bp = Blueprint("api", __name__)
 @api_bp.route("/ping", methods=["GET"])
 def ping():
     return "pong"
+# def site_map():
+#     links = []
+#     for rule in app.url_map.iter_rules():
+#         if "GET" in rule.methods and has_no_empty_params(rule):
+#             url = url_for(rule.endpoint, **(rule.defaults or {}))
+#             links.append((url, rule.endpoint))
+#     return {"links": links}
 # ---------- Product Viewing Endpoints ----------
 
 @api_bp.route("/products", methods=["GET"])
@@ -174,6 +181,23 @@ def update_product(product_id):
     except Exception as e:
         logger.error(f"Error updating product {product_id}: {e}")
         return jsonify({"error": "Failed to update product"}), 500
+    
+# ---------- Category Endpoints ----------
+@api_bp.route("/categories", methods=["POST"])
+def add_category():
+    try:
+        data = request.get_json()
+        new_category = Category(
+            name=data["name"],
+            description=data.get("description", "")
+        )
+        db.session.add(new_category)
+        db.session.commit()
+        logger.info(f"New category created: {new_category.id}")
+        return jsonify({"id": str(new_category.id)}), 201
+    except Exception as e:
+        logger.error(f"Error adding new category: {e}")
+        return jsonify({"error": "Failed to add new category"}), 500
 
 @api_bp.route("/products/<uuid:product_id>", methods=["DELETE"])
 def delete_product(product_id):
@@ -207,46 +231,46 @@ def get_product_reviews(product_id):
 
 # ---------- Coupon Endpoints ----------
 
-@api_bp.route("/coupons", methods=["POST"])
-def add_coupon():
-    try:
-        data = request.get_json()
-        new_coupon = Coupon(
-            code=data["code"],
-            discount_percent=data["discount_percent"],
-            expiration_date=data["expiration_date"],
-            is_active=data.get("is_active", True)
-        )
-        db.session.add(new_coupon)
-        db.session.commit()
-        logger.info(f"New coupon created: {new_coupon.id}")
-        return jsonify({"id": str(new_coupon.id)}), 201
-    except Exception as e:
-        logger.error(f"Error adding new coupon: {e}")
-        return jsonify({"error": "Failed to add new coupon"}), 500
+# @api_bp.route("/coupons", methods=["POST"])
+# def add_coupon():
+#     try:
+#         data = request.get_json()
+#         new_coupon = Coupon(
+#             code=data["code"],
+#             discount_percent=data["discount_percent"],
+#             expiration_date=data["expiration_date"],
+#             is_active=data.get("is_active", True)
+#         )
+#         db.session.add(new_coupon)
+#         db.session.commit()
+#         logger.info(f"New coupon created: {new_coupon.id}")
+#         return jsonify({"id": str(new_coupon.id)}), 201
+#     except Exception as e:
+#         logger.error(f"Error adding new coupon: {e}")
+#         return jsonify({"error": "Failed to add new coupon"}), 500
 
-@api_bp.route("/coupons/<uuid:coupon_id>", methods=["PUT"])
-def update_coupon(coupon_id):
-    try:
-        data = request.get_json()
-        coupon = Coupon.query.get_or_404(coupon_id)
-        coupon.code = data.get("code", coupon.code)
-        coupon.discount_percent = data.get("discount_percent", coupon.discount_percent)
-        coupon.expiration_date = data.get("expiration_date", coupon.expiration_date)
-        coupon.is_active = data.get("is_active", coupon.is_active)
-        db.session.commit()
-        return jsonify({"message": "Coupon updated successfully"}), 200
-    except Exception as e:
-        logger.error(f"Error updating coupon {coupon_id}: {e}")
-        return jsonify({"error": "Failed to update coupon"}), 500
+# @api_bp.route("/coupons/<uuid:coupon_id>", methods=["PUT"])
+# def update_coupon(coupon_id):
+#     try:
+#         data = request.get_json()
+#         coupon = Coupon.query.get_or_404(coupon_id)
+#         coupon.code = data.get("code", coupon.code)
+#         coupon.discount_percent = data.get("discount_percent", coupon.discount_percent)
+#         coupon.expiration_date = data.get("expiration_date", coupon.expiration_date)
+#         coupon.is_active = data.get("is_active", coupon.is_active)
+#         db.session.commit()
+#         return jsonify({"message": "Coupon updated successfully"}), 200
+#     except Exception as e:
+#         logger.error(f"Error updating coupon {coupon_id}: {e}")
+#         return jsonify({"error": "Failed to update coupon"}), 500
 
-@api_bp.route("/coupons/<uuid:coupon_id>", methods=["DELETE"])
-def delete_coupon(coupon_id):
-    try:
-        coupon = Coupon.query.get_or_404(coupon_id)
-        db.session.delete(coupon)
-        db.session.commit()
-        return jsonify({"message": "Coupon deleted successfully"}), 200
-    except Exception as e:
-        logger.error(f"Error deleting coupon {coupon_id}: {e}")
-        return jsonify({"error": "Failed to delete coupon"}), 500
+# @api_bp.route("/coupons/<uuid:coupon_id>", methods=["DELETE"])
+# def delete_coupon(coupon_id):
+#     try:
+#         coupon = Coupon.query.get_or_404(coupon_id)
+#         db.session.delete(coupon)
+#         db.session.commit()
+#         return jsonify({"message": "Coupon deleted successfully"}), 200
+#     except Exception as e:
+#         logger.error(f"Error deleting coupon {coupon_id}: {e}")
+#         return jsonify({"error": "Failed to delete coupon"}), 500

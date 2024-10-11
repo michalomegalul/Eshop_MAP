@@ -32,14 +32,14 @@ def create_app():
     from .views import api_bp
     app.register_blueprint(api_bp, url_prefix="/api")
 
-    # @app.route("/site-map")
-    # def site_map():
-    #     links = []
-    #     for rule in app.url_map.iter_rules():
-    #         if "GET" in rule.methods and has_no_empty_params(rule):
-    #             url = url_for(rule.endpoint, **(rule.defaults or {}))
-    #             links.append((url, rule.endpoint))
-    #     return {"links": links}
+    @app.route("/site-map")
+    def site_map():
+        links = []
+        for rule in app.url_map.iter_rules():
+            if "GET" in rule.methods and has_no_empty_params(rule):
+                url = url_for(rule.endpoint, **(rule.defaults or {}))
+                links.append((url, rule.endpoint))
+        return {"links": links}
 
     # @app.route("/ping", methods=["GET"])
     # def ping():
