@@ -230,6 +230,29 @@ def get_product_reviews(product_id):
         return jsonify({"error": "Failed to fetch reviews"}), 500
 
 # ---------- Coupon Endpoints ----------
+@api_bp.route("/create-payment-intent", methods=["POST"])
+def create_payment_intent():
+    """Create a Stripe Payment Intent for a new order"""
+    try:
+        data = request.json
+        # Amount should be provided in cents (e.g., 5000 for $50.00)
+        amount = int(data.get("amount"))
+
+        # Create a PaymentIntent with the given amount and currency
+        intent = stripe.PaymentIntent.create(
+            amount=amount,  # Amount in cents
+            currency="usd",  # Currency (e.g., "usd")
+            payment_method_types=["card"]  # Specify allowed payment method types
+        )
+
+        # Return the client secret to be used by the frontend to confirm payment
+        return jsonify({"clientSecret": intent['client_secret']}), 200
+
+    except Exception as e:
+        logger.error(f"Error creating payment intent: {e}")
+        return jsonify({"error": "Failed to create payment intent"}), 500
+
+# ---------- Coupon Endpoints ----------
 
 # @api_bp.route("/coupons", methods=["POST"])
 # def add_coupon():
