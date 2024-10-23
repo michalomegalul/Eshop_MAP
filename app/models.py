@@ -140,6 +140,18 @@ class OrderItem(Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
 
+#class OrderPayment(Model):
+#    __tablename__ = "order_payments"
+#
+#    id = db.Column(UUID(as_uuid=True), primary_key=True, #default=uuid.uuid4)
+#    order_id = db.Column(UUID(as_uuid=True), #db.ForeignKey("orders.id"), nullable=False)
+#    payment_method_id = db.Column(UUID(as_uuid=True), #db.ForeignKey("user_payment_methods.id"), nullable=False)
+ #   amount = db.Column(db.Numeric(10, 2), nullable=False)
+  #  status = db.Column(db.String(20), nullable=False, #comment="Possible values: pending, completed, failed, refunded")
+#    transaction_id = db.Column(db.String(255), nullable=True)
+#    created_at = db.Column(db.DateTime, default=datetime.utcnow, #nullable=False)
+#    updated_at = db.Column(db.DateTime, default=datetime.utcnow, #onupdate=datetime.utcnow)
+#
 class OrderPayment(Model):
     __tablename__ = "order_payments"
 
@@ -148,7 +160,7 @@ class OrderPayment(Model):
     payment_method_id = db.Column(UUID(as_uuid=True), db.ForeignKey("user_payment_methods.id"), nullable=False)
     amount = db.Column(db.Numeric(10, 2), nullable=False)
     status = db.Column(db.String(20), nullable=False, comment="Possible values: pending, completed, failed, refunded")
-    transaction_id = db.Column(db.String(255), nullable=True)
+    transaction_id = db.Column(db.String(255), nullable=True)  # Store Stripe transaction ID here
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
