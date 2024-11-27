@@ -1,7 +1,12 @@
 import atexit
+import os
 from flask import Flask, url_for
-from flask_migrate import Migrate, upgrade
-from .models import db
+from flask_migrate import Migrate
+from .views import jwt
+import stripe
+from .models import bcrypt, db
+
+# Inicializace rozšíření
 
 
 def has_no_empty_params(rule):
@@ -9,26 +14,33 @@ def has_no_empty_params(rule):
     arguments = rule.arguments if rule.arguments is not None else ()
     return len(defaults) >= len(arguments)
 
-
 def create_app():
-    app = Flask(__name__)
+    app = Flask(__name__)  # Initialize the Flask app
+
+    # Set up Stripe API keys from environment variables
+    stripe.api_key = os.getenv('STRIPE_SECRET_KEY')  # Secret key for backend
+    app.config['STRIPE_PUBLIC_KEY'] = os.getenv('STRIPE_PUBLIC_KEY')  # Public key for frontend
+
     app.config.from_object("config.Config")
     print(app.config)
 
+    # Inicializace rozšíření
     db.init_app(app)
-    Migrate(app, db)
+    bcrypt.init_app(app)
+    jwt.init_app(app)
+    Migrate(app, db) 
     print("DB INITIALIZED migrations")
 
     # Run migrations on startup
     with app.app_context():
         try:
-            upgrade()
+            from flask_migrate import upgrade
+            upgrade()  # Apply migrations
             print("Database migrations applied successfully.")
         except Exception as e:
             print(f"Failed to apply migrations: {e}")
 
-
-    # Register the blueprint
+    # Register the blueprint for your API routes
     from .views import api_bp
     app.register_blueprint(api_bp, url_prefix="/api")
 
@@ -41,11 +53,6 @@ def create_app():
                 links.append((url, rule.endpoint))
         return {"links": links}
 
-    # @app.route("/ping", methods=["GET"])
-    # def ping():
-    #     return "pong"
-
     return app
-
 
 app = create_app()

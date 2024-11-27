@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Users</h2>
+
+<!-- Form to create a new user -->
+<form action="{{ url_for('admin.create_user') }}" method="POST">
+    <div class="mb-3">
+        <label for="username" class="form-label">Username</label>
+        <input type="text" class="form-control" id="username" name="username" placeholder="Enter username" required>
+    </div>
+    <div class="mb-3">
+        <label for="email" class="form-label">Email</label>
+        <input type="email" class="form-control" id="email" name="email" placeholder="Enter email" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Create User</button>
+</form>
+
+<!-- Display a list of users -->
+<h3 class="mt-5">Existing Users</h3>
+<ul class="list-group">
+    {% for user in users %}
+        <li class="list-group-item">{{ user.username }} - {{ user.email }}</li>
+    {% endfor %}
+</ul>
+{% endblock %}

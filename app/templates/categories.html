@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Categories</h2>
+
+<!-- Form to create a new category -->
+<form action="{{ url_for('admin.create_category') }}" method="POST">
+    <div class="mb-3">
+        <label for="categoryName" class="form-label">Category Name</label>
+        <input type="text" class="form-control" id="categoryName" name="name" placeholder="Enter category name" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Add Category</button>
+</form>
+
+<!-- Display a list of categories -->
+<h3 class="mt-5">Existing Categories</h3>
+<ul class="list-group">
+    {% for category in categories %}
+        <li class="list-group-item">{{ category.name }}</li>
+    {% endfor %}
+</ul>
+{% endblock %}

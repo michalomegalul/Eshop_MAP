@@ -1,8 +1,12 @@
 [tool.poetry]
-name = "Eshop_MAP"
+name = "eshop-map"
 version = "0.1.0"
 description = ""
 authors = ["michalomegalul <dog560154@gmail.com>"]
+
+packages = [
+    { include = "app" }
+]
 
 [tool.poetry.dependencies]
 python = "^3.9"
@@ -14,7 +18,10 @@ requests = "^2.32.2"
 python-dotenv = "^1.0.1"
 gunicorn = "^22.0.0"
 importlib-metadata = "^8.5.0"
+stripe = "^2.60.0"  # Ensure stripe is added
 
+flask-bcrypt = "^1.0.1"
+flask-jwt-extended = "^4.7.1"
 [tool.poetry.dev-dependencies]
 pytest = "^8.2.1"
 pytest-cov = "^4.0.0"

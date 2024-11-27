@@ -1,9 +1,10 @@
 import uuid
-from datetime import datetime, date
+from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy import CheckConstraint
+from sqlalchemy.dialects.postgresql import UUID
 from typing import TYPE_CHECKING
+from flask_bcrypt import Bcrypt
 
 db = SQLAlchemy()
 
@@ -11,11 +12,13 @@ if TYPE_CHECKING:
     from flask_sqlalchemy.model import Model
 else:
     Model = db.Model
+bcrypt = Bcrypt()
 
 
-class User(Model):
+class User(db.Model):
     __tablename__ = "users"
 
+    # Sloupce
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     username = db.Column(db.String(80), nullable=False, unique=True)
     first_name = db.Column(db.String(80), nullable=True)
@@ -23,16 +26,46 @@ class User(Model):
     email = db.Column(db.String(120), nullable=False, unique=True)
     telephone = db.Column(db.String(20), nullable=True)
     password_hash = db.Column(db.String(128), nullable=False)
-    role = db.Column(db.String(20), nullable=False, comment='Possible values: admin, customer')
+    role = db.Column(db.String(20), nullable=False, comment="Possible values: admin, customer")
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    status = db.Column(db.String(20), nullable=True, comment='Possible values: active, inactive, suspended')
+    status = db.Column(db.String(20), nullable=True, comment="Possible values: active, inactive, suspended")
+
 
     addresses = db.relationship("UserAddress", backref="user", lazy=True)
     payment_methods = db.relationship("UserPaymentMethod", backref="user", lazy=True)
     orders = db.relationship("Order", backref="user", lazy=True)
     shopping_cart = db.relationship("ShoppingCart", backref="user", uselist=False, cascade="all, delete-orphan")
 
+
+    def set_password(self, password: str):
+        """
+        hashes the password and stores it in the password_hash column
+        """
+        self.password_hash = bcrypt.generate_password_hash(password).decode("utf-8")
+
+    def check_password(self, password: str) -> bool:
+        """
+        Checks password against stored hash.
+        """
+        return bcrypt.check_password_hash(self.password_hash, password)
+
+    def to_dict(self):
+        """
+        returns a dictionary representation of the User object
+        """
+        return {
+            "id": str(self.id),
+            "username": self.username,
+            "first_name": self.first_name,
+            "last_name": self.last_name,
+            "email": self.email,
+            "telephone": self.telephone,
+            "role": self.role,
+            "status": self.status,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
 
 class UserAddress(Model):
     __tablename__ = "user_addresses"

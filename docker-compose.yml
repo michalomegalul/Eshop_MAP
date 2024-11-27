@@ -50,22 +50,22 @@ services:
       - db
     volumes:
       - pgadmin_data:/var/lib/pgadmin
-  prometheus:
-    image: prom/prometheus
-    volumes:
-      - ./prometheus:/etc/prometheus
-    ports:
-      - 9090:9090
+  # prometheus:
+  #   image: prom/prometheus
+  #   volumes:
+  #     - ./prometheus:/etc/prometheus
+  #   ports:
+  #     - 9090:9090
 
-  grafana:
-    image: grafana/grafana
-    volumes:
-      - ./grafana:/var/lib/grafana
-    ports:
-      - 3000:3000
-    depends_on:
-      - prometheus
+  # grafana:
+  #   image: grafana/grafana
+  #   volumes:
+  #     - ./grafana:/var/lib/grafana
+  #   ports:
+  #     - 3000:3000
+  #   depends_on:
+  #     - prometheus
 volumes:
   pgadmin_data:
   prometheus:
-  grafana:
+  # grafana:

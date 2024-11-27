@@ -1,9 +1,15 @@
 from flask import Blueprint, jsonify, request, current_app
 from .models import db, User, Product, Order, ProductReview, Category #, Coupon
+import os
+from flask_jwt_extended import (
+    JWTManager, create_access_token, create_refresh_token, jwt_required, get_jwt_identity
+)
 import logging
+import stripe
+
 
 logger = logging.getLogger(__name__)
-
+jwt = JWTManager()
 api_bp = Blueprint("api", __name__)
 
 # ---------- TEST ----------
@@ -146,6 +152,34 @@ def delete_user(user_id):
         logger.error(f"Error deleting user {user_id}: {e}")
         return jsonify({"error": "Failed to delete user"}), 500
 
+@api_bp.route("/login", methods=["POST"])
+def login():
+    """Authenticate user and return JWT."""
+    data = request.json
+    if not data or not data.get("username") or not data.get("password"):
+        return jsonify({"error": "Missing username or password"}), 400
+
+    user = User.query.filter_by(username=data["username"]).first()
+    if user and user.check_password(data["password"]):
+        access_token = create_access_token(identity=user.id)
+        refresh_token = create_refresh_token(identity=user.id)
+        return jsonify({"access_token": access_token, "refresh_token": refresh_token}), 200
+
+    return jsonify({"error": "Invalid username or password"}), 401
+
+@api_bp.route("/logout", methods=["POST"])
+@jwt_required()
+def logout():
+    """Revoke user's tokens."""
+    # Implement token blacklisting here if needed
+    return jsonify({"message": "Successfully logged out"}), 200
+
+@api_bp.route("/protected", methods=["GET"])
+@jwt_required()
+def protected():
+    """A protected route that requires a valid JWT."""
+    current_user_id = get_jwt_identity()
+    return jsonify({"message": f"Hello user {current_user_id}!"}), 200
 # ---------- Product Endpoints ----------
 
 @api_bp.route("/products", methods=["POST"])
@@ -229,7 +263,7 @@ def get_product_reviews(product_id):
         logger.error(f"Error fetching reviews for product {product_id}: {e}")
         return jsonify({"error": "Failed to fetch reviews"}), 500
 
-# ---------- Coupon Endpoints ----------
+# ---------- Stripe Endpoints ----------
 @api_bp.route("/create-payment-intent", methods=["POST"])
 def create_payment_intent():
     """Create a Stripe Payment Intent for a new order"""
@@ -251,6 +285,28 @@ def create_payment_intent():
     except Exception as e:
         logger.error(f"Error creating payment intent: {e}")
         return jsonify({"error": "Failed to create payment intent"}), 500
+# ---------- Webhooks endpint ----------
+@api_bp.route('/webhook', methods=['POST'])
+def stripe_webhook():
+    payload = request.get_data(as_text=True)
+    sig_header = request.headers.get('Stripe-Signature')
+    webhook_secret = os.getenv('STRIPE_WEBHOOK_SECRET')
+
+    try:
+        event = stripe.Webhook.construct_event(payload, sig_header, webhook_secret)
+    except ValueError as e:
+        # Invalid payload
+        return jsonify({'error': 'Invalid payload'}), 400
+    except stripe.error.SignatureVerificationError as e:
+        # Invalid signature
+        return jsonify({'error': 'Invalid signature'}), 400
+
+    # Handle the event
+    if event['type'] == 'payment_intent.succeeded':
+        payment_intent = event['data']['object']  # Contains the successful payment details
+        print(f"Payment for {payment_intent['amount']} succeeded.")
+
+    return jsonify({'status': 'success'}), 200
 
 # ---------- Coupon Endpoints ----------
 
