@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to Eshop</title>
+  <script>
+    // Check if the user is logged in (you can check for a token or session here)
+    const isLoggedIn = localStorage.getItem('access_token'); // Example: Using localStorage for JWT token
+
+    if (!isLoggedIn) {
+      // Redirect to login page if not logged in
+      window.location.href = '/login';
+    }
+  </script>
+</head>
+<body>
+  <header>
+    <h1>Welcome to Eshop</h1>
+    <p>If you're seeing this, you're logged in!</p>
+  </header> 
+</body>
+</html>

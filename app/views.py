@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request, current_app
+from flask import Blueprint, jsonify, request
 from .models import db, User, Product, Order, ProductReview, Category #, Coupon
 import os
 from flask_jwt_extended import (
@@ -6,7 +6,6 @@ from flask_jwt_extended import (
 )
 import logging
 import stripe
-
 
 logger = logging.getLogger(__name__)
 jwt = JWTManager()
@@ -18,11 +17,14 @@ def ping():
     return "pong"
 # def site_map():
 #     links = []
-#     for rule in app.url_map.iter_rules():
+#     for rule in api_bp.url_map.iter_rules():
 #         if "GET" in rule.methods and has_no_empty_params(rule):
 #             url = url_for(rule.endpoint, **(rule.defaults or {}))
 #             links.append((url, rule.endpoint))
 #     return {"links": links}
+# @api_bp.route('/uwu', methods=["GET"])
+# def index():
+#     return render_template('register.html')
 # ---------- Product Viewing Endpoints ----------
 
 @api_bp.route("/products", methods=["GET"])
@@ -102,8 +104,8 @@ def get_products_by_category(category_id):
     
 # ---------- User Endpoints ----------
 
-@api_bp.route("/users", methods=["POST"])
-def add_user():
+@api_bp.route("/register", methods=["POST"])
+def register():
     try:
         data = request.get_json()
         new_user = User(
@@ -166,7 +168,6 @@ def login():
         return jsonify({"access_token": access_token, "refresh_token": refresh_token}), 200
 
     return jsonify({"error": "Invalid username or password"}), 401
-
 @api_bp.route("/logout", methods=["POST"])
 @jwt_required()
 def logout():

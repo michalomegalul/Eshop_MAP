@@ -18,7 +18,6 @@ bcrypt = Bcrypt()
 class User(db.Model):
     __tablename__ = "users"
 
-    # Sloupce
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     username = db.Column(db.String(80), nullable=False, unique=True)
     first_name = db.Column(db.String(80), nullable=True)

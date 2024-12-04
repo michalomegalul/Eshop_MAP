@@ -3,7 +3,6 @@ FROM duffn/python-poetry:3.9-slim
 WORKDIR /app
 
 COPY pyproject.toml poetry.lock ./
-
 RUN poetry install --no-root
 
 COPY . .

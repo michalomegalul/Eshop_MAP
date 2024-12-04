@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 h-screen flex items-center justify-center">
+    <div class="bg-white p-8 rounded-lg shadow-lg w-96">
+        <h1 class="text-2xl font-semibold text-gray-700 text-center mb-6">Register</h1>
+        <form id="registerForm" class="space-y-4">
+            <div>
+                <label for="username" class="block text-sm font-medium text-gray-600">Username</label>
+                <input 
+                    type="text" 
+                    id="username" 
+                    class="w-full mt-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                    placeholder="Enter your username" 
+                    required 
+                />
+            </div>
+            <div>
+                <label for="password" class="block text-sm font-medium text-gray-600">Password</label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    class="w-full mt-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                    placeholder="Enter your password" 
+                    required 
+                />
+            </div>
+            <div>
+                <label for="confirmPassword" class="block text-sm font-medium text-gray-600">Confirm Password</label>
+                <input 
+                    type="password" 
+                    id="confirmPassword" 
+                    class="w-full mt-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                    placeholder="Confirm your password" 
+                    required 
+                />
+            </div>
+            <button 
+                type="submit" 
+                class="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition">
+                Register
+            </button>
+        </form>
+        <p id="errorMessage" class="text-red-500 text-sm mt-4 hidden"></p>
+        <p class="text-sm text-center mt-4">
+            Already have an account? <a href="login.html" class="text-blue-500 hover:underline">Login</a>
+        </p>
+    </div>
+
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+          e.preventDefault();
+          
+          const username = document.getElementById('username').value;
+          const password = document.getElementById('password').value;
+          const confirmPassword = document.getElementById('confirmPassword').value;
+          const errorMessage = document.getElementById('errorMessage');
+          errorMessage.classList.add('hidden');
+
+          if (password !== confirmPassword) {
+              errorMessage.textContent = 'Passwords do not match!';
+              errorMessage.classList.remove('hidden');
+              return;
+          }
+
+          try {
+              const response = await fetch('http://localhost:5000/api/register', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ username, password })
+              });
+
+              const result = await response.json();
+
+              if (response.ok) {
+                  alert('Registration successful! You can now login.');
+                  window.location.href = 'login.html'; // Redirect to login page after successful registration
+              } else {
+                  errorMessage.textContent = result.error || 'Registration failed. Please try again.';
+                  errorMessage.classList.remove('hidden');
+              }
+          } catch (error) {
+              errorMessage.textContent = 'An error occurred. Please try again later.';
+              errorMessage.classList.remove('hidden');
+          }
+      });
+
+    </script>
+</body>
+</html>
