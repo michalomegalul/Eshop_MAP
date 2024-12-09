@@ -52,7 +52,7 @@
             errorMessage.classList.add('hidden');
 
             try {
-                const response = await fetch('/api/login', {
+                const response = await fetch('http://localhost:5000/api/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, password })
@@ -65,7 +65,7 @@
                     localStorage.setItem('accessToken', result.access_token);
                     localStorage.setItem('refreshToken', result.refresh_token);
                     // Redirect to a protected page or dashboard
-                    window.location.href = '/dashboard.html'; // Redirect to dashboard after login
+                    window.location.href = '/index.html'; // Redirect to dashboard after login
                 } else {
                     errorMessage.textContent = result.error || 'Login failed. Please try again.';
                     errorMessage.classList.remove('hidden');

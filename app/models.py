@@ -14,7 +14,6 @@ else:
     Model = db.Model
 bcrypt = Bcrypt()
 
-
 class User(db.Model):
     __tablename__ = "users"
 
@@ -29,29 +28,29 @@ class User(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     status = db.Column(db.String(20), nullable=True, comment="Possible values: active, inactive, suspended")
-
-
+    
     addresses = db.relationship("UserAddress", backref="user", lazy=True)
     payment_methods = db.relationship("UserPaymentMethod", backref="user", lazy=True)
     orders = db.relationship("Order", backref="user", lazy=True)
     shopping_cart = db.relationship("ShoppingCart", backref="user", uselist=False, cascade="all, delete-orphan")
 
-
     def set_password(self, password: str):
         """
-        hashes the password and stores it in the password_hash column
+        Hashes the password and stores it in the password_hash column
         """
-        self.password_hash = bcrypt.generate_password_hash(password).decode("utf-8")
+        # Hash the password using Flask-Bcrypt
+        self.password_hash = bcrypt.generate_password_hash(password).decode('utf-8')
+        print(self.password_hash)  # Optional: Remove in production for security reasons
 
     def check_password(self, password: str) -> bool:
         """
-        Checks password against stored hash.
+        Checks the password against the stored hash
         """
         return bcrypt.check_password_hash(self.password_hash, password)
 
     def to_dict(self):
         """
-        returns a dictionary representation of the User object
+        Returns a dictionary representation of the User object
         """
         return {
             "id": str(self.id),
@@ -65,7 +64,6 @@ class User(db.Model):
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
-
 class UserAddress(Model):
     __tablename__ = "user_addresses"
 

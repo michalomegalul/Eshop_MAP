@@ -1,9 +1,8 @@
 import atexit
 import os
-from flask import Flask, url_for, render_template
+from flask import Flask, url_for, request
 import logging
 from flask_migrate import Migrate
-from flask_login import LoginManager
 from .views import jwt
 import stripe
 from .models import bcrypt, db
@@ -17,14 +16,20 @@ def has_no_empty_params(rule):
     arguments = rule.arguments if rule.arguments is not None else ()
     return len(defaults) >= len(arguments)
 
-def create_app():
-    template_path = os.path.abspath("app/templates")
-    app = Flask(__name__, template_folder=template_path)  # Initialize the Flask app
+
+def create_app():   
+    app = Flask(__name__)
     CORS(app, origins="http://localhost:9090")
 
     # Set up Stripe API keys from environment variables
     stripe.api_key = os.getenv('STRIPE_SECRET_KEY')  # Secret key for backend
     app.config['STRIPE_PUBLIC_KEY'] = os.getenv('STRIPE_PUBLIC_KEY')  # Public key for frontend
+
+    @app.before_request
+    def log_request_info():
+        app.logger.debug(f"Request Method: {request.method}")
+        app.logger.debug(f"Request URL: {request.url}")
+        app.logger.debug(f"Request Headers: {dict(request.headers)}")
 
     app.config.from_object("config.Config")
     print(app.config)
@@ -34,14 +39,12 @@ def create_app():
     db.init_app(app)
     bcrypt.init_app(app)
     jwt.init_app(app)
-    logging.basicConfig(level=logging.DEBUG)
-    app.logger.setLevel(logging.DEBUG)
-    login_manager = LoginManager()
     Migrate(app, db) 
-    login_manager.init_app(app)
-    login_manager.login_view = "login"
     print("logging in")
     print("DB INITIALIZED migrations")
+    gunicord_logger = logging.getLogger('gunicorn.error')
+    app.logger.handlers = gunicord_logger.handlers
+    app.logger.setLevel(gunicord_logger.level)
 
     # Run migrations on startup
     with app.app_context():
@@ -55,11 +58,6 @@ def create_app():
     # Register the blueprint for your API routes
     from .views import api_bp
     app.register_blueprint(api_bp, url_prefix="/api")
-    @app.route('/')
-    def home():
-        # Render the home page base.html
-        return render_template("base.html")
-
     @app.route("/site-map")
     def site_map():
         links = []

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Products and Categories</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center space-y-10">
+    <div class="bg-white p-8 rounded-lg shadow-lg w-96">
+        <h1 class="text-2xl font-semibold text-gray-700 text-center mb-6">Add Category</h1>
+        <form id="categoryForm" class="space-y-4">
+            <div>
+                <label for="category_name" class="block text-sm font-medium text-gray-600">Category Name</label>
+                <input 
+                    type="text" 
+                    id="category_name" 
+                    class="w-full mt-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                    placeholder="Enter category name" 
+                    required 
+                />
+            </div>
+            <div>
+                <label for="category_description" class="block text-sm font-medium text-gray-600">Description</label>
+                <textarea 
+                    id="category_description" 
+                    class="w-full mt-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                    placeholder="Enter category description (optional)" 
+                ></textarea>
+            </div>
+            <button 
+                type="submit" 
+                class="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition">
+                Add Category
+            </button>
+        </form>
+        <p id="categoryErrorMessage" class="text-red-500 text-sm mt-4 hidden"></p>
+    </div>
+
+    <div class="bg-white p-8 rounded-lg shadow-lg w-96">
+        <h1 class="text-2xl font-semibold text-gray-700 text-center mb-6">Add Product</h1>
+        <form id="productForm" class="space-y-4">
+            <div>
+                <label for="product_name" class="block text-sm font-medium text-gray-600">Product Name</label>
+                <input 
+                    type="text" 
+                    id="product_name" 
+                    class="w-full mt-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                    placeholder="Enter product name" 
+                    required 
+                />
+            </div>
+            <div>
+                <label for="product_description" class="block text-sm font-medium text-gray-600">Description</label>
+                <textarea 
+                    id="product_description" 
+                    class="w-full mt-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                    placeholder="Enter product description (optional)" 
+                ></textarea>
+            </div>
+            <div>
+                <label for="product_price" class="block text-sm font-medium text-gray-600">Price</label>
+                <input 
+                    type="number" 
+                    id="product_price" 
+                    class="w-full mt-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                    placeholder="Enter product price" 
+                    required 
+                    step="0.01" 
+                />
+            </div>
+            <div>
+                <label for="product_stock_quantity" class="block text-sm font-medium text-gray-600">Stock Quantity</label>
+                <input 
+                    type="number" 
+                    id="product_stock_quantity" 
+                    class="w-full mt-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                    placeholder="Enter stock quantity" 
+                    required 
+                />
+            </div>
+            <div>
+                <label for="product_category_id" class="block text-sm font-medium text-gray-600">Category ID</label>
+                <input 
+                    type="text" 
+                    id="product_category_id" 
+                    class="w-full mt-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                    placeholder="Enter category ID" 
+                    required 
+                />
+            </div>
+            <button 
+                type="submit" 
+                class="w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition">
+                Add Product
+            </button>
+        </form>
+        <p id="productErrorMessage" class="text-red-500 text-sm mt-4 hidden"></p>
+    </div>
+
+    <script>
+        // Submit Category Form
+        document.getElementById('categoryForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const name = document.getElementById('category_name').value;
+            const description = document.getElementById('category_description').value;
+            const errorMessage = document.getElementById('categoryErrorMessage');
+            errorMessage.classList.add('hidden');
+
+            try {
+                const response = await fetch('http://localhost:5000/api/categories', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, description })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert('Category added successfully!');
+                    document.getElementById('categoryForm').reset();
+                } else {
+                    errorMessage.textContent = result.error || 'Failed to add category.';
+                    errorMessage.classList.remove('hidden');
+                }
+            } catch (error) {
+                errorMessage.textContent = 'An error occurred. Please try again later.';
+                errorMessage.classList.remove('hidden');
+            }
+        });
+
+        // Submit Product Form
+        document.getElementById('productForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const name = document.getElementById('product_name').value;
+            const description = document.getElementById('product_description').value;
+            const price = document.getElementById('product_price').value;
+            const stock_quantity = document.getElementById('product_stock_quantity').value;
+            const category_id = document.getElementById('product_category_id').value;
+            const errorMessage = document.getElementById('productErrorMessage');
+            errorMessage.classList.add('hidden');
+
+            try {
+                const response = await fetch('http://localhost:5000/api/products', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, description, price, stock_quantity, category_id })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert('Product added successfully!');
+                    document.getElementById('productForm').reset();
+                } else {
+                    errorMessage.textContent = result.error || 'Failed to add product.';
+                    errorMessage.classList.remove('hidden');
+                }
+            } catch (error) {
+                errorMessage.textContent = 'An error occurred. Please try again later.';
+                errorMessage.classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,17 +1,22 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, current_app
 from .models import db, User, Product, Order, ProductReview, Category #, Coupon
 import os
 from flask_jwt_extended import (
     JWTManager, create_access_token, create_refresh_token, jwt_required, get_jwt_identity
 )
-import logging
 import stripe
-
+import logging
 logger = logging.getLogger(__name__)
 jwt = JWTManager()
 api_bp = Blueprint("api", __name__)
 
 # ---------- TEST ----------
+# @api_bp.route('/test-log', methods=['GET'])
+# def test_log():
+#     current_app.logger.info('Home page accessed')
+#     return {"message": "Check your logs"}
+
+
 @api_bp.route("/ping", methods=["GET"])
 def ping():
     return "pong"
@@ -107,24 +112,42 @@ def get_products_by_category(category_id):
 @api_bp.route("/register", methods=["POST"])
 def register():
     try:
+        # Get data from JSON request
         data = request.get_json()
+
+        # Validate input data
+        if not data:
+            return jsonify({"error": "Invalid or missing JSON payload"}), 400
+
+        # Create new user instance
         new_user = User(
-            username=data["username"],
+            username=data.get("username", ""),
             first_name=data.get("first_name", ""),
             last_name=data.get("last_name", ""),
-            email=data["email"],
+            email=data.get("email", ""),
             telephone=data.get("telephone", ""),
-            password_hash=data["password_hash"],
-            role=data["role"],
+            role=data.get("role", ""),
             status=data.get("status", "active")
         )
+
+        # Set the password (hashing it)
+        new_user.set_password(data.get("password", ""))
+
+        # Add user to the session and commit to the database
         db.session.add(new_user)
         db.session.commit()
+
+        # Log the creation of a new user
         logger.info(f"New user created: {new_user.id}")
+
+        # Return the new user ID as a response
         return jsonify({"id": str(new_user.id)}), 201
+
     except Exception as e:
-        logger.error(f"Error adding new user: {e}")
-        return jsonify({"error": "Failed to add new user"}), 500
+        # Log and handle any errors
+        logger.error(f'Error adding new user: {e}', exc_info=True)
+        return jsonify({"error": f"Failed to add new user: {str(e)}"}), 500
+
 
 @api_bp.route("/users/<uuid:user_id>", methods=["PUT"])
 def update_user(user_id):
@@ -219,20 +242,39 @@ def update_product(product_id):
     
 # ---------- Category Endpoints ----------
 @api_bp.route("/categories", methods=["POST"])
+@api_bp.route("/categories", methods=["POST"])
 def add_category():
     try:
         data = request.get_json()
+
+        # Validate required fields
+        if not data or not data.get("name"):
+            return jsonify({"error": "Category name is required"}), 400
+
+        # Check if parent category exists
+        parent_category = None
+        if "parent_id" in data and data["parent_id"]:
+            parent_category = Category.query.get(data["parent_id"])
+            if not parent_category:
+                return jsonify({"error": "Parent category not found"}), 400
+
+        # Create new category
         new_category = Category(
             name=data["name"],
-            description=data.get("description", "")
+            parent_id=data.get("parent_id")
         )
+
         db.session.add(new_category)
         db.session.commit()
+
         logger.info(f"New category created: {new_category.id}")
         return jsonify({"id": str(new_category.id)}), 201
+
     except Exception as e:
-        logger.error(f"Error adding new category: {e}")
+        db.session.rollback()
+        logger.error(f"Error adding new category: {e}", exc_info=True)
         return jsonify({"error": "Failed to add new category"}), 500
+
 
 @api_bp.route("/products/<uuid:product_id>", methods=["DELETE"])
 def delete_product(product_id):
