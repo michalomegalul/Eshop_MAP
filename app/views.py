@@ -32,6 +32,7 @@ def ping():
 #     return render_template('register.html')
 # ---------- Product Viewing Endpoints ----------
 
+
 @api_bp.route("/products", methods=["GET"])
 def get_all_products():
     """Fetch all products with optional filtering by category."""
@@ -62,7 +63,23 @@ def get_all_products():
         logger.error(f"Error fetching products: {e}")
         return jsonify({"error": "Failed to fetch products"}), 500
 
-
+@api_bp.route("/categories", methods=["GET"])
+def get_all_categories():
+    """Fetch all categories."""
+    try:
+        categories = Category.query.all()
+        categories_data = [
+            {
+                "id": str(category.id),
+                "name": category.name,
+                "parent_id": str(category.parent_id)
+            }
+            for category in categories
+        ]
+        return jsonify(categories_data), 200
+    except Exception as e:
+        logger.error(f"Error fetching categories: {e}")
+        return jsonify({"error": "Failed to fetch categories"}), 500
 @api_bp.route("/products/<uuid:product_id>", methods=["GET"])
 def get_product_by_id(product_id):
     """Fetch a single product by its ID."""
@@ -106,9 +123,52 @@ def get_products_by_category(category_id):
     except Exception as e:
         logger.error(f"Error fetching products for category {category_id}: {e}")
         return jsonify({"error": "Failed to fetch products"}), 500
-    
-# ---------- User Endpoints ----------
+# ---------- User Viewing Endpoints ----------
+@api_bp.route("/users", methods=["GET"])
+def get_all_users():
+    try:
+        users = User.query.all()
+        users_data = [
+            {
+                "id": str(user.id),
+                "username": user.username,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "email": user.email,
+                "telephone": user.telephone,
+                "role": user.role,
+                "status": user.status,
+                "created_at": user.created_at,
+                "updated_at": user.updated_at
+            }
+            for user in users
+        ]
+        return jsonify(users_data), 200
+    except Exception as e:
+        logger.error(f"Error fetching users: {e}")
+        return jsonify({"error": "Failed to fetch users"}), 500
 
+@api_bp.route("/users/<uuid:user_id>", methods=["GET"])
+def get_user_by_id(user_id):
+    try:
+        user = User.query.get_or_404(user_id)
+        user_data = {
+            "id": str(user.id),
+            "username": user.username,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "email": user.email,
+            "telephone": user.telephone,
+            "role": user.role,
+            "status": user.status,
+            "created_at": user.created_at,
+            "updated_at": user.updated_at
+        }
+        return jsonify(user_data), 200
+    except Exception as e:
+        logger.error(f"Error fetching user {user_id}: {e}")
+        return jsonify({"error": "Failed to fetch user"}), 500
+# ---------- User Endpoints ----------
 @api_bp.route("/register", methods=["POST"])
 def register():
     try:
@@ -241,7 +301,6 @@ def update_product(product_id):
         return jsonify({"error": "Failed to update product"}), 500
     
 # ---------- Category Endpoints ----------
-@api_bp.route("/categories", methods=["POST"])
 @api_bp.route("/categories", methods=["POST"])
 def add_category():
     try:

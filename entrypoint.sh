@@ -13,5 +13,4 @@ exec poetry run gunicorn \
     --access-logfile - \
     --error-logfile - \
     --log-level debug \
-    --access-logformat '%(h)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s "%(f)s" "%(a)s"' \
     "app:app"

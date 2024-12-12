@@ -17,7 +17,7 @@ def has_no_empty_params(rule):
     return len(defaults) >= len(arguments)
 
 
-def create_app():   
+def create_app():
     app = Flask(__name__)
     CORS(app, origins="http://localhost:9090")
 
@@ -42,9 +42,6 @@ def create_app():
     Migrate(app, db) 
     print("logging in")
     print("DB INITIALIZED migrations")
-    gunicord_logger = logging.getLogger('gunicorn.error')
-    app.logger.handlers = gunicord_logger.handlers
-    app.logger.setLevel(gunicord_logger.level)
 
     # Run migrations on startup
     with app.app_context():

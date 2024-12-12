@@ -61,11 +61,10 @@
                 const result = await response.json();
 
                 if (response.ok) {
-                    alert('Login successful!');
                     localStorage.setItem('accessToken', result.access_token);
                     localStorage.setItem('refreshToken', result.refresh_token);
-                    // Redirect to a protected page or dashboard
-                    window.location.href = '/index.html'; // Redirect to dashboard after login
+                    alert('Login successful!');
+                    window.location.href = '/';
                 } else {
                     errorMessage.textContent = result.error || 'Login failed. Please try again.';
                     errorMessage.classList.remove('hidden');

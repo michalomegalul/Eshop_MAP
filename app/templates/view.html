@@ -19,7 +19,7 @@
         </div>
 
         <!-- Products Table -->
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto mb-8">
             <table class="min-w-full bg-white border rounded-lg shadow">
                 <thead>
                     <tr class="bg-gray-200">
@@ -35,12 +35,18 @@
                 </tbody>
             </table>
         </div>
+
+        <!-- Categories Section -->
+        <h2 class="text-2xl font-bold text-center mb-4">Categories</h2>
+        <div id="categoriesList" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <!-- Categories will be dynamically populated -->
+        </div>
     </div>
 
     <script>
         const apiBaseUrl = "http://localhost:5000/api";
 
-        // Fetch all categories and populate the filter dropdown
+        // Fetch all categories and populate the filter dropdown and categories section
         async function fetchCategories() {
             try {
                 const response = await fetch(`${apiBaseUrl}/categories`);
@@ -48,11 +54,23 @@
                 const categories = await response.json();
 
                 const categoryFilter = document.getElementById("categoryFilter");
+                const categoriesList = document.getElementById("categoriesList");
+
                 categories.forEach(category => {
+                    // Populate the category filter dropdown
                     const option = document.createElement("option");
                     option.value = category.id;
                     option.textContent = category.name;
                     categoryFilter.appendChild(option);
+
+                    // Populate the categories section
+                    const categoryCard = document.createElement("div");
+                    categoryCard.className = "p-4 bg-white border rounded-lg shadow";
+                    categoryCard.innerHTML = `
+                        <h3 class="text-lg font-semibold mb-2">${category.name}</h3>
+                        <p class="text-gray-600">Category ID: ${category.id}</p>
+                    `;
+                    categoriesList.appendChild(categoryCard);
                 });
             } catch (error) {
                 console.error(error);

@@ -1,23 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Welcome to Eshop</title>
-  <script>
-    // Check if the user is logged in (you can check for a token or session here)
-    const isLoggedIn = localStorage.getItem('access_token'); // Example: Using localStorage for JWT token
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Eshop</title>
+    <script>
+        // Načtení tokenu z localStorage
+        const accessToken = localStorage.getItem('accessToken');
 
-    if (!isLoggedIn) {
-      // Redirect to login page if not logged in
-      window.location.href = '/login';
-    }
-  </script>
+        async function verifyToken() {
+            if (!accessToken) {
+                // Přesměrování na login, pokud token neexistuje
+                window.location.href = '/login';
+                return;
+            }
+
+            try {
+                // Ověření tokenu voláním chráněného endpointu
+                const response = await fetch('http://localhost:5000/api/protected', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('welcomeMessage').textContent = data.message;
+                } else {
+                    // Token je neplatný nebo vypršel
+                    localStorage.removeItem('accessToken');
+                    window.location.href = '/login';
+                }
+            } catch (error) {
+                console.error('Error verifying token:', error);
+                window.location.href = '/login';
+            }
+        }
+
+        // Ověření tokenu při načtení stránky
+        window.onload = verifyToken;
+    </script>
 </head>
 <body>
-  <header>
-    <h1>Welcome to Eshop</h1>
-    <p>If you're seeing this, you're logged in!</p>
-  </header> 
+    <header>
+        <h1>Welcome to Eshop</h1>
+        <p id="welcomeMessage">Loading...</p>
+    </header>
 </body>
 </html>
