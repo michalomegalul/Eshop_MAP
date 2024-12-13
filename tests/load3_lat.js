@@ -36,7 +36,7 @@ function randomApiCall() {
                 description: 'Random product description.',
                 price: Math.random() * 100 + 10,
                 stock_quantity: Math.floor(Math.random() * 50) + 1,
-                category_id: '54aa31fa-7263-4db9-a864-0fd6dc887eb6'
+                category_id: '34f2d9e0-818c-4111-8871-c29fb6c772af'
             };
         }
     }

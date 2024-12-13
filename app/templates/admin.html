@@ -5,6 +5,47 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Products and Categories</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        async function verifyAdmin() {
+            const accessToken = localStorage.getItem('accessToken');
+            if (!accessToken) {
+                // Redirect to login if no token is found
+                window.location.href = '/login.html';
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:5000/api/protected', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const userRole = data.user_role;
+
+                    // Check if the user role is not admin
+                    if (userRole !== 'admin') {
+                        alert('You are not authorized to access this page.');
+                        window.location.href = '/index.html'; // Redirect to homepage
+                    }
+                } else {
+                    // If token verification fails, redirect to login
+                    localStorage.removeItem('accessToken');
+                    window.location.href = '/login.html';
+                }
+            } catch (error) {
+                console.error('Error verifying token:', error);
+                localStorage.removeItem('accessToken');
+                window.location.href = '/login.html';
+            }
+        }
+
+        // Verify admin on page load
+        window.onload = verifyAdmin;
+    </script>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center space-y-10">
     <div class="bg-white p-8 rounded-lg shadow-lg w-96">
@@ -97,72 +138,5 @@
         </form>
         <p id="productErrorMessage" class="text-red-500 text-sm mt-4 hidden"></p>
     </div>
-
-    <script>
-        // Submit Category Form
-        document.getElementById('categoryForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-
-            const name = document.getElementById('category_name').value;
-            const description = document.getElementById('category_description').value;
-            const errorMessage = document.getElementById('categoryErrorMessage');
-            errorMessage.classList.add('hidden');
-
-            try {
-                const response = await fetch('http://localhost:5000/api/categories', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, description })
-                });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    alert('Category added successfully!');
-                    document.getElementById('categoryForm').reset();
-                } else {
-                    errorMessage.textContent = result.error || 'Failed to add category.';
-                    errorMessage.classList.remove('hidden');
-                }
-            } catch (error) {
-                errorMessage.textContent = 'An error occurred. Please try again later.';
-                errorMessage.classList.remove('hidden');
-            }
-        });
-
-        // Submit Product Form
-        document.getElementById('productForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-
-            const name = document.getElementById('product_name').value;
-            const description = document.getElementById('product_description').value;
-            const price = document.getElementById('product_price').value;
-            const stock_quantity = document.getElementById('product_stock_quantity').value;
-            const category_id = document.getElementById('product_category_id').value;
-            const errorMessage = document.getElementById('productErrorMessage');
-            errorMessage.classList.add('hidden');
-
-            try {
-                const response = await fetch('http://localhost:5000/api/products', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, description, price, stock_quantity, category_id })
-                });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    alert('Product added successfully!');
-                    document.getElementById('productForm').reset();
-                } else {
-                    errorMessage.textContent = result.error || 'Failed to add product.';
-                    errorMessage.classList.remove('hidden');
-                }
-            } catch (error) {
-                errorMessage.textContent = 'An error occurred. Please try again later.';
-                errorMessage.classList.remove('hidden');
-            }
-        });
-    </script>
 </body>
 </html>

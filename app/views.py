@@ -1,8 +1,8 @@
-from flask import Blueprint, jsonify, request, current_app
+from flask import Blueprint, jsonify, request, render_template
 from .models import db, User, Product, Order, ProductReview, Category #, Coupon
 import os
 from flask_jwt_extended import (
-    JWTManager, create_access_token, create_refresh_token, jwt_required, get_jwt_identity
+    JWTManager, create_access_token, create_refresh_token, jwt_required, get_jwt
 )
 import stripe
 import logging
@@ -30,8 +30,7 @@ def ping():
 # @api_bp.route('/uwu', methods=["GET"])
 # def index():
 #     return render_template('register.html')
-# ---------- Product Viewing Endpoints ----------
-
+# ---------- Product and category Viewing Endpoints ----------
 
 @api_bp.route("/products", methods=["GET"])
 def get_all_products():
@@ -186,7 +185,7 @@ def register():
             last_name=data.get("last_name", ""),
             email=data.get("email", ""),
             telephone=data.get("telephone", ""),
-            role=data.get("role", ""),
+            role=data.get("role", "user"),
             status=data.get("status", "active")
         )
 
@@ -246,11 +245,14 @@ def login():
 
     user = User.query.filter_by(username=data["username"]).first()
     if user and user.check_password(data["password"]):
-        access_token = create_access_token(identity=user.id)
+        additional_claims = {"role": user.role, "name":user.first_name}  # Add role as a custom claim
+        access_token = create_access_token(identity=user.id, additional_claims=additional_claims)
         refresh_token = create_refresh_token(identity=user.id)
         return jsonify({"access_token": access_token, "refresh_token": refresh_token}), 200
 
     return jsonify({"error": "Invalid username or password"}), 401
+
+
 @api_bp.route("/logout", methods=["POST"])
 @jwt_required()
 def logout():
@@ -262,9 +264,28 @@ def logout():
 @jwt_required()
 def protected():
     """A protected route that requires a valid JWT."""
-    current_user_id = get_jwt_identity()
-    return jsonify({"message": f"Hello user {current_user_id}!"}), 200
-# ---------- Product Endpoints ----------
+    claims = get_jwt()
+    user_role = claims.get("role", "user")
+    user_name = claims.get("name", "unknown")
+
+    return jsonify({"user_name": user_name, "user_role": user_role}), 200
+
+
+
+@api_bp.route("/admin", methods=["GET"])
+@jwt_required()
+def admin_page():
+    """Serve the admin page if the user is an admin."""
+    claims = get_jwt()  # Get JWT claims
+    user_role = claims.get("role", "user")
+    if user_role != "admin":
+        return jsonify({"error": "Access denied"}), 403
+
+    # Render the admin page for admins
+    return render_template("admin.html")
+
+# ---------- Product Endpoints ----------   
+
 
 @api_bp.route("/products", methods=["POST"])
 def add_product():

@@ -7,16 +7,14 @@
     <script>
         // Načtení tokenu z localStorage
         const accessToken = localStorage.getItem('accessToken');
-
         async function verifyToken() {
+            const accessToken = localStorage.getItem('accessToken');
             if (!accessToken) {
-                // Přesměrování na login, pokud token neexistuje
-                window.location.href = '/login';
+                window.location.href = '/login.html';
                 return;
             }
 
             try {
-                // Ověření tokenu voláním chráněného endpointu
                 const response = await fetch('http://localhost:5000/api/protected', {
                     method: 'GET',
                     headers: {
@@ -26,20 +24,31 @@
 
                 if (response.ok) {
                     const data = await response.json();
-                    document.getElementById('welcomeMessage').textContent = data.message;
+                    const userName = data.user_name;
+                    const userRole = data.user_role;
+
+                    // Update the welcome message and role display
+                    document.getElementById('welcomeMessage').textContent = `Hi ${userName}, your role is ${userRole}!`;
+
+                    // Add a link to the admin page if the user is an admin
+                    if (userRole === "admin") {
+                        const adminLink = document.createElement("a");
+                        adminLink.href = "/admin.html";
+                        adminLink.textContent = "Go to Admin Page";
+                        document.body.appendChild(adminLink);
+                    }
                 } else {
-                    // Token je neplatný nebo vypršel
                     localStorage.removeItem('accessToken');
-                    window.location.href = '/login';
+                    window.location.href = '/login.html';
                 }
             } catch (error) {
                 console.error('Error verifying token:', error);
-                window.location.href = '/login';
+                window.location.href = '/login.html';
             }
         }
 
-        // Ověření tokenu při načtení stránky
-        window.onload = verifyToken;
+window.onload = verifyToken;
+
     </script>
 </head>
 <body>

@@ -24,7 +24,7 @@ class User(db.Model):
     email = db.Column(db.String(120), nullable=False, unique=True)
     telephone = db.Column(db.String(20), nullable=True)
     password_hash = db.Column(db.String(128), nullable=False)
-    role = db.Column(db.String(20), nullable=False, comment="Possible values: admin, customer")
+    role = db.Column(db.String(20), nullable=False, comment="Possible values: admin, user")
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     status = db.Column(db.String(20), nullable=True, comment="Possible values: active, inactive, suspended")

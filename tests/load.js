@@ -25,7 +25,7 @@ function createRandomProduct() {
         description: 'A sample product description.',
         price: Math.random() * 100 + 10,  // Random price between 10 and 110
         stock_quantity: Math.floor(Math.random() * 50) + 1,  // Random stock between 1 and 50
-        category_id: '54aa31fa-7263-4db9-a864-0fd6dc887eb6'  // Update with valid category id if necessary
+        category_id: '34f2d9e0-818c-4111-8871-c29fb6c772af'  // Update with valid category id if necessary
     };
 }
 
