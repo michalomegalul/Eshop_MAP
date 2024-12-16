@@ -5,8 +5,110 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Products</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        async function verifyUser() {
+            const accessToken = localStorage.getItem('accessToken');
+            if (!accessToken) {
+                // Redirect to login if no token is found
+                window.location.href = '/login.html';
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:5000/api/protected', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+
+                if (!response.ok) {
+                    // If token verification fails, redirect to login
+                    localStorage.removeItem('accessToken');
+                    window.location.href = '/login.html';
+                }
+            } catch (error) {
+                console.error('Error verifying token:', error);
+                localStorage.removeItem('accessToken');
+                window.location.href = '/login.html';
+            }
+        }
+
+        async function fetchCategories() {
+            try {
+                const response = await fetch('http://localhost:5000/api/categories');
+                if (!response.ok) throw new Error("Failed to fetch categories");
+                const categories = await response.json();
+
+                const categoryFilter = document.getElementById("categoryFilter");
+                const categoriesList = document.getElementById("categoriesList");
+
+                categories.forEach(category => {
+                    // Populate the category filter dropdown
+                    const option = document.createElement("option");
+                    option.value = category.id;
+                    option.textContent = category.name;
+                    categoryFilter.appendChild(option);
+
+                    // Populate the categories section
+                    const categoryCard = document.createElement("div");
+                    categoryCard.className = "p-4 bg-white border rounded-lg shadow";
+                    categoryCard.innerHTML = `
+                        <h3 class="text-lg font-semibold mb-2">${category.name}</h3>
+                        <p class="text-gray-600">Category ID: ${category.id}</p>
+                    `;
+                    categoriesList.appendChild(categoryCard);
+                });
+            } catch (error) {
+                console.error(error);
+                alert("Error loading categories.");
+            }
+        }
+
+        async function fetchProducts(categoryId = "") {
+            try {
+                const url = categoryId ? `http://localhost:5000/api/products?category_id=${categoryId}` : `http://localhost:5000/api/products`;
+                const response = await fetch(url);
+                if (!response.ok) throw new Error("Failed to fetch products");
+                const products = await response.json();
+
+                const productsTable = document.getElementById("productsTable");
+                productsTable.innerHTML = ""; // Clear the table
+
+                products.forEach(product => {
+                    const row = document.createElement("tr");
+
+                    row.innerHTML = `
+                        <td class="py-2 px-4 border">${product.name}</td>
+                        <td class="py-2 px-4 border">${product.description}</td>
+                        <td class="py-2 px-4 border">$${product.price.toFixed(2)}</td>
+                        <td class="py-2 px-4 border">${product.stock_quantity}</td>
+                        <td class="py-2 px-4 border">${product.category_id || "N/A"}</td>
+                    `;
+
+                    productsTable.appendChild(row);
+                });
+            } catch (error) {
+                console.error(error);
+                alert("Error loading products.");
+            }
+        }
+
+        async function initializePage() {
+            await verifyUser();
+            await fetchCategories();
+            await fetchProducts();
+        }
+
+        document.getElementById("categoryFilter")?.addEventListener("change", (event) => {
+            const categoryId = event.target.value;
+            fetchProducts(categoryId);
+        });
+
+        window.onload = initializePage;
+    </script>
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-100 min-h-screen">
     <div class="container mx-auto p-4">
         <h1 class="text-3xl font-bold text-center mb-8">Products</h1>
 
@@ -42,86 +144,5 @@
             <!-- Categories will be dynamically populated -->
         </div>
     </div>
-
-    <script>
-        const apiBaseUrl = "http://localhost:5000/api";
-
-        // Fetch all categories and populate the filter dropdown and categories section
-        async function fetchCategories() {
-            try {
-                const response = await fetch(`${apiBaseUrl}/categories`);
-                if (!response.ok) throw new Error("Failed to fetch categories");
-                const categories = await response.json();
-
-                const categoryFilter = document.getElementById("categoryFilter");
-                const categoriesList = document.getElementById("categoriesList");
-
-                categories.forEach(category => {
-                    // Populate the category filter dropdown
-                    const option = document.createElement("option");
-                    option.value = category.id;
-                    option.textContent = category.name;
-                    categoryFilter.appendChild(option);
-
-                    // Populate the categories section
-                    const categoryCard = document.createElement("div");
-                    categoryCard.className = "p-4 bg-white border rounded-lg shadow";
-                    categoryCard.innerHTML = `
-                        <h3 class="text-lg font-semibold mb-2">${category.name}</h3>
-                        <p class="text-gray-600">Category ID: ${category.id}</p>
-                    `;
-                    categoriesList.appendChild(categoryCard);
-                });
-            } catch (error) {
-                console.error(error);
-                alert("Error loading categories.");
-            }
-        }
-
-        // Fetch products based on category filter
-        async function fetchProducts(categoryId = "") {
-            try {
-                const url = categoryId ? `${apiBaseUrl}/products?category_id=${categoryId}` : `${apiBaseUrl}/products`;
-                const response = await fetch(url);
-                if (!response.ok) throw new Error("Failed to fetch products");
-                const products = await response.json();
-
-                const productsTable = document.getElementById("productsTable");
-                productsTable.innerHTML = ""; // Clear the table
-
-                products.forEach(product => {
-                    const row = document.createElement("tr");
-
-                    row.innerHTML = `
-                        <td class="py-2 px-4 border">${product.name}</td>
-                        <td class="py-2 px-4 border">${product.description}</td>
-                        <td class="py-2 px-4 border">$${product.price.toFixed(2)}</td>
-                        <td class="py-2 px-4 border">${product.stock_quantity}</td>
-                        <td class="py-2 px-4 border">${product.category_id || "N/A"}</td>
-                    `;
-
-                    productsTable.appendChild(row);
-                });
-            } catch (error) {
-                console.error(error);
-                alert("Error loading products.");
-            }
-        }
-
-        // Initialize the page
-        async function initializePage() {
-            await fetchCategories();
-            await fetchProducts();
-        }
-
-        // Event listener for category filter
-        document.getElementById("categoryFilter").addEventListener("change", (event) => {
-            const categoryId = event.target.value;
-            fetchProducts(categoryId);
-        });
-
-        // Initialize on load
-        initializePage();
-    </script>
 </body>
 </html>

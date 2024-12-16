@@ -43,6 +43,88 @@
             }
         }
 
+        async function addCategory(event) {
+            event.preventDefault();
+
+            const categoryForm = document.getElementById('categoryForm');
+            const categoryErrorMessage = document.getElementById('categoryErrorMessage');
+
+            const category_name = document.getElementById('category_name').value;
+            const category_description = document.getElementById('category_description').value;
+
+            try {
+                const response = await fetch('http://localhost:5000/api/categories', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+                    },
+                    body: JSON.stringify({
+                        name: category_name,
+                        description: category_description
+                    })
+                });
+
+                if (response.ok) {
+                    alert('Category added successfully');
+                    categoryForm.reset();
+                    categoryErrorMessage.classList.add('hidden');
+                } else {
+                    const data = await response.json();
+                    categoryErrorMessage.textContent = data.message || 'Error adding category';
+                    categoryErrorMessage.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error adding category:', error);
+                categoryErrorMessage.textContent = 'An error occurred while adding the category';
+                categoryErrorMessage.classList.remove('hidden');
+            }
+        }
+
+        async function addProduct(event) {
+            event.preventDefault();
+
+            const productForm = document.getElementById('productForm');
+            const productErrorMessage = document.getElementById('productErrorMessage');
+
+            const product_name = document.getElementById('product_name').value;
+            const product_description = document.getElementById('product_description').value;
+            const product_price = document.getElementById('product_price').value;
+            const product_stock_quantity = document.getElementById('product_stock_quantity').value;
+            const product_category_id = document.getElementById('product_category_id').value;
+
+            try {
+                const response = await fetch('http://localhost:5000/api/products', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+                    },
+                    body: JSON.stringify({
+                        name: product_name,
+                        description: product_description,
+                        price: parseFloat(product_price),
+                        stock_quantity: parseInt(product_stock_quantity, 10),
+                        category_id: product_category_id
+                    })
+                });
+
+                if (response.ok) {
+                    alert('Product added successfully');
+                    productForm.reset();
+                    productErrorMessage.classList.add('hidden');
+                } else {
+                    const data = await response.json();
+                    productErrorMessage.textContent = data.message || 'Error adding product';
+                    productErrorMessage.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error adding product:', error);
+                productErrorMessage.textContent = 'An error occurred while adding the product';
+                productErrorMessage.classList.remove('hidden');
+            }
+        }
+
         // Verify admin on page load
         window.onload = verifyAdmin;
     </script>
@@ -50,7 +132,7 @@
 <body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center space-y-10">
     <div class="bg-white p-8 rounded-lg shadow-lg w-96">
         <h1 class="text-2xl font-semibold text-gray-700 text-center mb-6">Add Category</h1>
-        <form id="categoryForm" class="space-y-4">
+        <form id="categoryForm" class="space-y-4" onsubmit="addCategory(event)">
             <div>
                 <label for="category_name" class="block text-sm font-medium text-gray-600">Category Name</label>
                 <input 
@@ -80,7 +162,7 @@
 
     <div class="bg-white p-8 rounded-lg shadow-lg w-96">
         <h1 class="text-2xl font-semibold text-gray-700 text-center mb-6">Add Product</h1>
-        <form id="productForm" class="space-y-4">
+        <form id="productForm" class="space-y-4" onsubmit="addProduct(event)">
             <div>
                 <label for="product_name" class="block text-sm font-medium text-gray-600">Product Name</label>
                 <input 
