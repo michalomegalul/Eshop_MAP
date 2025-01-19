@@ -34,16 +34,10 @@ def ping():
 
 @api_bp.route("/products", methods=["GET"])
 def get_all_products():
-    """Fetch all products with optional filtering by category."""
     try:
-        category_id = request.args.get("category_id")
-        
-        # If category_id is provided, filter products by category
-        if category_id:
-            products = Product.query.filter_by(category_id=category_id).all()
-        else:
-            products = Product.query.all()
-
+        page = request.args.get("page", 1, type=int)
+        per_page = request.args.get("per_page", 10, type=int)
+        products = Product.query.paginate(page=page, per_page=per_page, error_out=False)
         products_data = [
             {
                 "id": str(product.id),
@@ -55,12 +49,23 @@ def get_all_products():
                 "created_at": product.created_at,
                 "updated_at": product.updated_at
             }
-            for product in products
+            for product in products.items
         ]
-        return jsonify(products_data), 200
+        return jsonify({
+            "products": products_data,
+            "total": products.total,
+            "pages": products.pages,
+            "current_page": products.page
+        }), 200
     except Exception as e:
         logger.error(f"Error fetching products: {e}")
         return jsonify({"error": "Failed to fetch products"}), 500
+
+@api_bp.route("/products/search", methods=["GET"])
+def search_products():
+    query = request.args.get("query", "")
+    products = Product.query.filter(Product.name.ilike(f"%{query}%") | Product.description.ilike(f"%{query}%")).all()
+    return jsonify([{"id": p.id, "name": p.name} for p in products])
 
 @api_bp.route("/categories", methods=["GET"])
 def get_all_categories():

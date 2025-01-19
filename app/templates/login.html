@@ -42,9 +42,9 @@
         </p>
     </div>
     <script>
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        document.getElementById('loginForm').addEventListener('submit', async function (e) {
             e.preventDefault();
-            
+
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
             const errorMessage = document.getElementById('errorMessage');
@@ -62,7 +62,11 @@
                     localStorage.setItem('accessToken', result.access_token);
                     localStorage.setItem('refreshToken', result.refresh_token);
                     alert('Login successful!');
-                    window.location.href = '/';
+                    
+                    // Redirect to the saved page or default to "/"
+                    const redirectAfterLogin = localStorage.getItem('redirectAfterLogin') || '/';
+                    localStorage.removeItem('redirectAfterLogin');
+                    window.location.href = redirectAfterLogin;
                 } else {
                     errorMessage.textContent = result.error || 'Login failed. Please try again.';
                     errorMessage.classList.remove('hidden');
@@ -72,6 +76,7 @@
                 errorMessage.classList.remove('hidden');
             }
         });
+
     </script>
 </body>
 </html>

@@ -5,6 +5,7 @@ from sqlalchemy import CheckConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from typing import TYPE_CHECKING
 from flask_bcrypt import Bcrypt
+from app import metrics
 
 db = SQLAlchemy()
 

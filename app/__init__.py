@@ -7,6 +7,7 @@ from .views import jwt
 import stripe
 from .models import bcrypt, db
 from flask_cors import CORS
+from prometheus_flask_exporter import PrometheusMetrics
 
 # Inicializace rozšíření
 
@@ -33,7 +34,10 @@ def create_app():
 
     app.config.from_object("config.Config")
     print(app.config)
+    
 
+
+    metrics = PrometheusMetrics(app)
     # Inicializace rozšíření
     template_path = os.path.abspath("app/templates")
     db.init_app(app)
@@ -42,17 +46,21 @@ def create_app():
     Migrate(app, db) 
     print("logging in")
     print("DB INITIALIZED migrations")
-
-    # Run migrations on startup
-    with app.app_context():
-        try:
-            from flask_migrate import upgrade
-            upgrade()  # Apply migrations
-            print("Database migrations applied successfully.")
-        except Exception as e:
-            print(f"Failed to apply migrations: {e}")
+    # @metrics.counter('custom_endpoint_counter', 'Counts accesses to the custom endpoint')
+    # @app.route('/custom')
+    # def custom_endpoint():
+    #     return "This is a custom endpoint!"
+    # # Run migrations on startup
+    # with app.app_context():
+    #     try:
+    #         from flask_migrate import upgrade
+    #         upgrade()  # Apply migrations
+    #         print("Database migrations applied successfully.")
+    #     except Exception as e:
+    #         print(f"Failed to apply migrations: {e}")
 
     # Register the blueprint for your API routes
+
     from .views import api_bp
     app.register_blueprint(api_bp, url_prefix="/api")
     @app.route("/site-map")
