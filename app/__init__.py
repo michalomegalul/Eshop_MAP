@@ -7,7 +7,6 @@ from .views import jwt
 import stripe
 from .models import bcrypt, db
 from flask_cors import CORS
-from prometheus_flask_exporter import PrometheusMetrics
 
 # Inicializace rozšíření
 
@@ -20,7 +19,7 @@ def has_no_empty_params(rule):
 
 def create_app():
     app = Flask(__name__)
-    CORS(app, origins="http://localhost:9090")
+    CORS(app, origins="http://localhost:8000")
 
     # Set up Stripe API keys from environment variables
     stripe.api_key = os.getenv('STRIPE_SECRET_KEY')  # Secret key for backend
@@ -31,15 +30,16 @@ def create_app():
         app.logger.debug(f"Request Method: {request.method}")
         app.logger.debug(f"Request URL: {request.url}")
         app.logger.debug(f"Request Headers: {dict(request.headers)}")
+        app.logger.debug(f"Request Body: {request.get_data()}")
+        app.logger.debug(f"Request JSON: {request.get_json()}")
+        
 
     app.config.from_object("config.Config")
     print(app.config)
     
 
 
-    metrics = PrometheusMetrics(app)
     # Inicializace rozšíření
-    template_path = os.path.abspath("app/templates")
     db.init_app(app)
     bcrypt.init_app(app)
     jwt.init_app(app)
@@ -51,13 +51,13 @@ def create_app():
     # def custom_endpoint():
     #     return "This is a custom endpoint!"
     # # Run migrations on startup
-    # with app.app_context():
-    #     try:
-    #         from flask_migrate import upgrade
-    #         upgrade()  # Apply migrations
-    #         print("Database migrations applied successfully.")
-    #     except Exception as e:
-    #         print(f"Failed to apply migrations: {e}")
+    with app.app_context():
+        try:
+            from flask_migrate import upgrade
+            upgrade()  # Apply migrations
+            print("Database migrations applied successfully.")
+        except Exception as e:
+            print(f"Failed to apply migrations: {e}")
 
     # Register the blueprint for your API routes
 

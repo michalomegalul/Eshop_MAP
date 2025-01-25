@@ -32,12 +32,19 @@ def ping():
 #     return render_template('register.html')
 # ---------- Product and category Viewing Endpoints ----------
 
+
+
 @api_bp.route("/products", methods=["GET"])
 def get_all_products():
     try:
+        # Fetch page and per_page params from the request, defaults to page 1, per_page 10
         page = request.args.get("page", 1, type=int)
         per_page = request.args.get("per_page", 10, type=int)
+
+        # Query the Product model, paginated
         products = Product.query.paginate(page=page, per_page=per_page, error_out=False)
+
+        # Prepare product data for response
         products_data = [
             {
                 "id": str(product.id),
@@ -46,20 +53,25 @@ def get_all_products():
                 "price": float(product.price),
                 "stock_quantity": product.stock_quantity,
                 "category_id": str(product.category_id),
-                "created_at": product.created_at,
-                "updated_at": product.updated_at
+                "created_at": product.created_at.isoformat(),  # Ensure datetime is in ISO format
+                "updated_at": product.updated_at.isoformat()
             }
             for product in products.items
         ]
+
+        # Return paginated product data
         return jsonify({
             "products": products_data,
             "total": products.total,
             "pages": products.pages,
-            "current_page": products.page
+            "current_page": products.page,
+            "per_page": per_page  # Including per_page for clarity
         }), 200
     except Exception as e:
+        # Catch any other unexpected exceptions
         logger.error(f"Error fetching products: {e}")
         return jsonify({"error": "Failed to fetch products"}), 500
+
 
 @api_bp.route("/products/search", methods=["GET"])
 def search_products():

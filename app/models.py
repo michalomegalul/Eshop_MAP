@@ -1,11 +1,9 @@
 import uuid
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import CheckConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from typing import TYPE_CHECKING
 from flask_bcrypt import Bcrypt
-from app import metrics
 
 db = SQLAlchemy()
 
