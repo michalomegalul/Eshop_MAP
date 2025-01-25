@@ -1,9 +1,10 @@
-from flask import Blueprint, jsonify, request, render_template
+from flask import Blueprint, jsonify, request, render_template, make_response
 from .models import db, User, Product, Order, ProductReview, Category #, Coupon
 import os
 from flask_jwt_extended import (
-    JWTManager, create_access_token, create_refresh_token, jwt_required, get_jwt
+    JWTManager, create_access_token, create_refresh_token, jwt_required, get_jwt, get_jwt_identity
 )
+import datetime
 import stripe
 import logging
 logger = logging.getLogger(__name__)
@@ -32,19 +33,34 @@ def ping():
 #     return render_template('register.html')
 # ---------- Product and category Viewing Endpoints ----------
 
-
+from flask import request, jsonify
 
 @api_bp.route("/products", methods=["GET"])
 def get_all_products():
     try:
-        # Fetch page and per_page params from the request, defaults to page 1, per_page 10
-        page = request.args.get("page", 1, type=int)
-        per_page = request.args.get("per_page", 10, type=int)
+        print("🔍 Received request to /products")
+        print(f"🔍 Request Args: {request.args}")  # Log query parameters
 
-        # Query the Product model, paginated
-        products = Product.query.paginate(page=page, per_page=per_page, error_out=False)
+        page = request.args.get("page", default=1, type=int)
+        per_page = request.args.get("per_page", default=12, type=int)
+        pagination = Product.query.paginate(page=page, per_page=per_page, error_out=False)
+        # Fetch all products
+        products = Product.query.all()  # Get all products from DB
 
-        # Prepare product data for response
+        if not products:
+            print("No products found in the database.")
+            return jsonify({
+                "products": [],
+                "total": 0,
+                "pages": 0,
+                "current_page": page
+            }), 200
+
+        # Manually paginate products
+        # start = (page - 1) * per_page
+        # end = start + per_page
+        # paginated_products = products[start:end]
+
         products_data = [
             {
                 "id": str(product.id),
@@ -53,25 +69,55 @@ def get_all_products():
                 "price": float(product.price),
                 "stock_quantity": product.stock_quantity,
                 "category_id": str(product.category_id),
-                "created_at": product.created_at.isoformat(),  # Ensure datetime is in ISO format
-                "updated_at": product.updated_at.isoformat()
+                "created_at": product.created_at,
+                "updated_at": product.updated_at
             }
-            for product in products.items
+            for product in pagination.items
         ]
 
-        # Return paginated product data
-        return jsonify({
+        response = jsonify({
             "products": products_data,
-            "total": products.total,
-            "pages": products.pages,
-            "current_page": products.page,
-            "per_page": per_page  # Including per_page for clarity
-        }), 200
+            "total": pagination.total,
+            "pages": pagination.pages,
+            "current_page": pagination.page
+        })
+        response.headers['Content-Type'] = 'application/json'
+        return response, 200
+
     except Exception as e:
-        # Catch any other unexpected exceptions
-        logger.error(f"Error fetching products: {e}")
+        print(f"Error fetching products: {e}")
         return jsonify({"error": "Failed to fetch products"}), 500
 
+
+# @api_bp.route("/products", methods=["GET"])
+# def get_all_products():
+#     """Fetch all products with optional filtering by category."""
+#     try:
+#         category_id = request.args.get("category_id")
+        
+#         # If category_id is provided, filter products by category
+#         if category_id:
+#             products = Product.query.filter_by(category_id=category_id).all()
+#         else:
+#             products = Product.query.all()
+
+#         products_data = [
+#             {
+#                 "id": str(product.id),
+#                 "name": product.name,
+#                 "description": product.description,
+#                 "price": float(product.price),
+#                 "stock_quantity": product.stock_quantity,
+#                 "category_id": str(product.category_id),
+#                 "created_at": product.created_at,
+#                 "updated_at": product.updated_at
+#             }
+#             for product in products
+#         ]
+#         return jsonify(products_data), 200
+#     except Exception as e:
+#         logger.error(f"Error fetching products: {e}")
+#         return jsonify({"error": "Failed to fetch products"}), 500
 
 @api_bp.route("/products/search", methods=["GET"])
 def search_products():
@@ -101,20 +147,26 @@ def get_product_by_id(product_id):
     """Fetch a single product by its ID."""
     try:
         product = Product.query.get_or_404(product_id)
+        
         product_data = {
             "id": str(product.id),
             "name": product.name,
             "description": product.description,
             "price": float(product.price),
-            "stock_quantity": product.stock_quantity,
+            "availability": "In Stock" if product.stock_quantity > 0 else "Out of Stock",
+            "imageUrl": product.image_url if product.image_url else "/files/DP-logo-small.png",
+            "rating": product.rating if hasattr(product, "rating") else 4.5,  # Default rating
             "category_id": str(product.category_id),
             "created_at": product.created_at,
             "updated_at": product.updated_at
         }
+        
         return jsonify(product_data), 200
+
     except Exception as e:
         logger.error(f"Error fetching product {product_id}: {e}")
         return jsonify({"error": "Failed to fetch product"}), 500
+
 
 
 @api_bp.route("/products/category/<uuid:category_id>", methods=["GET"])
@@ -206,7 +258,6 @@ def register():
             status=data.get("status", "active")
         )
 
-        # Set the password (hashing it)
         new_user.set_password(data.get("password", ""))
 
         # Add user to the session and commit to the database
@@ -255,27 +306,66 @@ def delete_user(user_id):
 
 @api_bp.route("/login", methods=["POST"])
 def login():
-    """Authenticate user and return JWT."""
+    """Authenticate user and return JWT in secure cookies."""
     data = request.json
     if not data or not data.get("username") or not data.get("password"):
         return jsonify({"error": "Missing username or password"}), 400
 
     user = User.query.filter_by(username=data["username"]).first()
     if user and user.check_password(data["password"]):
-        additional_claims = {"role": user.role, "name":user.first_name}  # Add role as a custom claim
-        access_token = create_access_token(identity=user.id, additional_claims=additional_claims)
-        refresh_token = create_refresh_token(identity=user.id)
-        return jsonify({"access_token": access_token, "refresh_token": refresh_token}), 200
+        additional_claims = {"role": user.role, "name": user.first_name}  
+        access_token = create_access_token(
+            identity=user.id, 
+            additional_claims=additional_claims,
+            expires_delta=datetime.timedelta(minutes=15)  # Short lifespan
+        )
+        refresh_token = create_refresh_token(
+            identity=user.id, 
+            expires_delta=datetime.timedelta(days=7)  # Long lifespan
+        )
+
+        # Create response and set cookies
+        response = make_response(jsonify({"message": "Login successful"}))
+        response.set_cookie("access_token", access_token, httponly=True, secure=True, samesite="Strict")
+        response.set_cookie("refresh_token", refresh_token, httponly=True, secure=True, samesite="Strict")
+
+        return response, 200
 
     return jsonify({"error": "Invalid username or password"}), 401
 
 
+@api_bp.route("/refresh", methods=["POST"])
+@jwt_required(refresh=True)  # Requires a valid refresh token
+def refresh():
+    """Generate a new access token using the refresh token."""
+    user_id = get_jwt_identity()
+    new_access_token = create_access_token(identity=user_id)
+
+    response = make_response(jsonify({"message": "Token refreshed"}))
+    response.set_cookie("access_token", new_access_token, httponly=True, secure=True, samesite="Strict")
+
+    return response, 200
+@api_bp.route("/auth-check", methods=["GET"])
+@jwt_required() 
+def auth_check():
+    """Check if user is authenticated and return user info."""
+    user_id = get_jwt_identity() 
+    claims = get_jwt()
+
+    return jsonify({
+        "id": user_id,
+        "role": claims.get("role"),
+        "name": claims.get("name")
+    }), 200
 @api_bp.route("/logout", methods=["POST"])
-@jwt_required()
 def logout():
-    """Revoke user's tokens."""
-    # Implement token blacklisting here if needed
-    return jsonify({"message": "Successfully logged out"}), 200
+    """Clear authentication cookies to log out the user."""
+    response = make_response(jsonify({"message": "Logged out"}))
+    response.set_cookie("access_token", "", expires=0, httponly=True, secure=True, samesite="Strict")
+    response.set_cookie("refresh_token", "", expires=0, httponly=True, secure=True, samesite="Strict")
+
+    return response, 200
+
 
 @api_bp.route("/protected", methods=["GET"])
 @jwt_required()

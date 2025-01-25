@@ -5,6 +5,8 @@ import Eshop from './pages/eshop'
 import Iflash from './pages/iflash'
 import Register from "./pages/Register";
 import Login from './pages/Login'
+import ProductDetail from "./pages/ProductDetail";
+
 
 
 function App() {
@@ -15,6 +17,7 @@ function App() {
           <Route path='/' element={<Home />} />
           <Route path='/cenik' element={<Cenik />} />
           <Route path='/eshop' element={<Eshop />} />
+          <Route path="/product/:id" element={<ProductDetail />} />
           <Route path='/iflash' element={<Iflash />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />

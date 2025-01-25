@@ -84,11 +84,11 @@ const Header = () => {
 
                         <Nav link="https://dieselpower.cz/forum/" item="Fórum" onClick={() => setIsOpen(false)} target="_blank" rel="noopener noreferrer" />
                         
-                        <Link to="/eshop">
-                            <Nav link="/eshop" item="Kontakt" onClick={() => setIsOpen(false)} />
+                        <Link to="/#/eshop">
+                            <Nav link="/#/eshop" item="Kontakt" onClick={() => setIsOpen(false)} />
                         </Link>
                     </ul>
-                    <a href='https://shop.dieselpower.cz/' target="_blank" rel="noopener noreferrer" className='tablet:hidden flex items-center bg-red-600 text-white px-6 py-3 gap-4 font-semibold rounded-[3px] mt-4 hover:bg-red-800 transition-all duration-300'>
+                    <a href='/#/eshop' target="_blank" rel="noopener noreferrer" className='tablet:hidden flex items-center bg-red-600 text-white px-6 py-3 gap-4 font-semibold rounded-[3px] mt-4 hover:bg-red-800 transition-all duration-300'>
                         <img className='h-5' src="/files/icon-shop.png" alt="" />
                         <p>
                             E-Shop

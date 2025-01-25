@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import type { Product } from "../pages/eshop";
 
 interface ProductCardRawProps {
@@ -5,28 +6,35 @@ interface ProductCardRawProps {
 }
 
 const ProductCardRaw: React.FC<ProductCardRawProps> = ({ product }) => {
+    const navigate = useNavigate();
+    const isLoggedIn = !!localStorage.getItem("token");
+
     const handleAddToCart = () => {
-        console.log(`Added ${product.name} to the cart`);
-        // Add logic for cart management here
+        if (!isLoggedIn) {
+            navigate("/login"); 
+        } else {
+            console.log(`Added ${product.name} to the cart`);
+
+        }
     };
 
     return (
-        <div className="border rounded-lg shadow-md p-4 flex flex-col bg-white">
-            {/* Product Image */}
+        <div 
+            className="border rounded-lg shadow-md p-4 flex flex-col bg-white cursor-pointer hover:shadow-lg transition"
+            onClick={() => navigate(`/product/${product.id}`)}
+        >
             <div className="relative">
                 <img
                     src={product.imageUrl || "/files/DP-logo-small.png"}
-                    alt="Product"
+                    alt={product.name}
                     className="w-full h-40 object-contain bg-transparent"
                 />
             </div>
 
-            {/* Product Info */}
             <div className="mt-4 flex flex-col flex-1">
                 <h2 className="text-lg font-bold text-gray-800 mb-1">{product.name}</h2>
                 <p className="text-sm text-gray-500 mb-2">{product.description}</p>
-                
-                {/* Rating Stars */}
+
                 <div className="flex items-center text-yellow-500 mb-3">
                     {[...Array(5)].map((_, i) => (
                         <svg
@@ -43,17 +51,17 @@ const ProductCardRaw: React.FC<ProductCardRawProps> = ({ product }) => {
                     <span className="ml-2 text-gray-600 text-sm">({product.rating}, 56x)</span>
                 </div>
 
-                {/* Price */}
                 <div className="text-xl font-bold text-primary mb-1">
                     {product.price.toLocaleString()} Kč
                 </div>
 
-                {/* Availability */}
                 <p className="text-accent font-semibold mb-4">Skladem {product.availability}</p>
 
-                {/* Add to Cart Button */}
                 <button
-                    onClick={handleAddToCart}
+                    onClick={(e) => {
+                        e.stopPropagation(); // Prevent navigation when clicking button
+                        handleAddToCart();
+                    }}
                     className="w-full bg-primary text-white text-sm font-bold py-2 rounded hover:bg-red-800 transition"
                 >
                     Do košíku

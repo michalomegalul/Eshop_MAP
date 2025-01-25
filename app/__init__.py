@@ -11,10 +11,10 @@ from flask_cors import CORS
 # Inicializace rozšíření
 
 
-def has_no_empty_params(rule):
-    defaults = rule.defaults if rule.defaults is not None else ()
-    arguments = rule.arguments if rule.arguments is not None else ()
-    return len(defaults) >= len(arguments)
+# def has_no_empty_params(rule):
+#     defaults = rule.defaults if rule.defaults is not None else ()
+#     arguments = rule.arguments if rule.arguments is not None else ()
+#     return len(defaults) >= len(arguments)
 
 
 def create_app():
@@ -25,13 +25,13 @@ def create_app():
     stripe.api_key = os.getenv('STRIPE_SECRET_KEY')  # Secret key for backend
     app.config['STRIPE_PUBLIC_KEY'] = os.getenv('STRIPE_PUBLIC_KEY')  # Public key for frontend
 
-    @app.before_request
-    def log_request_info():
-        app.logger.debug(f"Request Method: {request.method}")
-        app.logger.debug(f"Request URL: {request.url}")
-        app.logger.debug(f"Request Headers: {dict(request.headers)}")
-        app.logger.debug(f"Request Body: {request.get_data()}")
-        app.logger.debug(f"Request JSON: {request.get_json()}")
+    # @app.before_request
+    # def log_request_info():
+    #     app.logger.debug(f"Request Method: {request.method}")
+    #     app.logger.debug(f"Request URL: {request.url}")
+    #     app.logger.debug(f"Request Headers: {dict(request.headers)}")
+    #     app.logger.debug(f"Request Body: {request.get_data()}")
+    #     app.logger.debug(f"Request JSON: {request.get_json()}")
         
 
     app.config.from_object("config.Config")

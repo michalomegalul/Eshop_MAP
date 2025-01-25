@@ -50,7 +50,7 @@ function headereshop() {
                     <div className="flex items-center space-x-8 text-sm">
                         <div className="relative">
                             <button className="flex items-center space-x-2">
-                                <img className="h-6" src="files/shopping-cart.png"></img>
+                                <img  className="h-6" src="files/shopping-cart.png" title="uwu"></img>
                                 <span>0 Kč</span>
                             </button>
                         </div>
