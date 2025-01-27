@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request, render_template, make_response
-from .models import db, User, Product, Order, ProductReview, Category #, Coupon
+from .models import db, User, Product, Order, ProductReview, Category, OrderStatus #, Coupon
 import os
+import json
 from flask_jwt_extended import (
     JWTManager, create_access_token, create_refresh_token, jwt_required, get_jwt, get_jwt_identity
 )
@@ -504,48 +505,69 @@ def get_product_reviews(product_id):
 
 # ---------- Stripe Endpoints ----------
 @api_bp.route("/create-payment-intent", methods=["POST"])
+@jwt_required()
 def create_payment_intent():
-    """Create a Stripe Payment Intent for a new order"""
-    try:
-        data = request.json
-        # Amount should be provided in cents (e.g., 5000 for $50.00)
-        amount = int(data.get("amount"))
+    user_id = get_jwt_identity()
+    data = request.get_json()
+    amount = data.get("amount")
+    products = data.get("products", [])
 
-        # Create a PaymentIntent with the given amount and currency
-        intent = stripe.PaymentIntent.create(
-            amount=amount,  # Amount in cents
-            currency="usd",  # Currency (e.g., "usd")
-            payment_method_types=["card"]  # Specify allowed payment method types
-        )
+    if not amount:
+        return jsonify({"error": "Amount is required"}), 400
 
-        # Return the client secret to be used by the frontend to confirm payment
-        return jsonify({"clientSecret": intent['client_secret']}), 200
+    intent = stripe.PaymentIntent.create(
+        amount=amount,
+        currency="usd",
+        metadata={"user_id": str(user_id), "products": json.dumps(products)}
+    )
 
-    except Exception as e:
-        logger.error(f"Error creating payment intent: {e}")
-        return jsonify({"error": "Failed to create payment intent"}), 500
+    return jsonify({"clientSecret": intent.client_secret})
+
 # ---------- Webhooks endpint ----------
-@api_bp.route('/webhook', methods=['POST'])
+@api_bp.route("/stripe/webhook", methods=["POST"])
 def stripe_webhook():
     payload = request.get_data(as_text=True)
-    sig_header = request.headers.get('Stripe-Signature')
-    webhook_secret = os.getenv('STRIPE_WEBHOOK_SECRET')
+    sig_header = request.headers.get("Stripe-Signature")
 
     try:
-        event = stripe.Webhook.construct_event(payload, sig_header, webhook_secret)
-    except ValueError as e:
-        # Invalid payload
-        return jsonify({'error': 'Invalid payload'}), 400
-    except stripe.error.SignatureVerificationError as e:
-        # Invalid signature
-        return jsonify({'error': 'Invalid signature'}), 400
+        event = stripe.Webhook.construct_event(payload, sig_header, os.getenv("STRIPE_WEBHOOK_SECRET"))
 
-    # Handle the event
-    if event['type'] == 'payment_intent.succeeded':
-        payment_intent = event['data']['object']  # Contains the successful payment details
-        print(f"Payment for {payment_intent['amount']} succeeded.")
+        if event["type"] == "payment_intent.succeeded":
+            session = event["data"]["object"]
+            user_id = session["metadata"]["user_id"]
+            products = json.loads(session["metadata"]["products"])
+            total_price = session["amount"] / 100
 
-    return jsonify({'status': 'success'}), 200
+            # Store order in database
+            new_order = Order(user_id=user_id, total=total_price, status=OrderStatus.COMPLETED)
+            db.session.add(new_order)
+            db.session.commit()
+
+        return jsonify({"message": "Webhook received"}), 200
+
+    except Exception as e:
+        return jsonify({"error": "Webhook processing failed"}), 400
+
+@api_bp.route("/orders", methods=["POST"])
+@jwt_required()
+def create_order():
+    try:
+        user_id = get_jwt_identity()
+        data = request.get_json()
+
+        if not data or "products" not in data or "total_price" not in data:
+            return jsonify({"error": "Invalid request data"}), 400
+
+        new_order = Order(user_id=user_id, total=data["total_price"], status=OrderStatus.COMPLETED)
+
+        db.session.add(new_order)
+        db.session.commit()
+
+        return jsonify({"message": "Order placed successfully", "order_id": new_order.id}), 201
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 # ---------- Coupon Endpoints ----------
 

@@ -4,7 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.dialects.postgresql import UUID
 from typing import TYPE_CHECKING
 from flask_bcrypt import Bcrypt
-
+import enum
 db = SQLAlchemy()
 
 if TYPE_CHECKING:
@@ -142,20 +142,30 @@ class ProductReview(Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+    
+class OrderStatus(enum.Enum):
+    PENDING = "pending"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+    SHIPPED = "shipped"
 
-class Order(Model):
+class Order(db.Model):
     __tablename__ = "orders"
 
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey("users.id"), nullable=False)
+    id = db.Column(db.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = db.Column(db.UUID(as_uuid=True), db.ForeignKey("users.id"), nullable=False)
     total = db.Column(db.Numeric(10, 2), nullable=False)
-    status = db.Column(db.String(20), nullable=False, comment="Possible values: pending, completed, cancelled, shipped")
+    status = db.Column(db.Enum(OrderStatus), nullable=False, default=OrderStatus.PENDING)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    order_items = db.relationship("OrderItem", backref="order", lazy=True)
+    order_items = db.relationship("OrderItem", backref="order", lazy="joined")
     payment = db.relationship("OrderPayment", backref="order", uselist=False, cascade="all, delete-orphan")
     shipping = db.relationship("OrderShipping", backref="order", uselist=False, cascade="all, delete-orphan")
+
+    def __repr__(self):
+        return f"<Order {self.id} - {self.status.value} - {self.total} USD>"
+
 
 
 class OrderItem(Model):

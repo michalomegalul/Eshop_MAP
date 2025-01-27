@@ -77,11 +77,12 @@ const CartPage: React.FC = () => {
                         Celkem: {getTotalPrice()} Kč
                     </div>
                     <button
-                        onClick={() => navigate("/checkout")}
-                        className="mt-4 w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700"
-                    >
-                        Pokračovat k platbě
-                    </button>
+                    onClick={() => navigate("/checkout")}
+                    className="mt-4 w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700"
+                >
+                    Pokračovat k platbě
+                </button>
+
                 </div>
             )}
         </div>

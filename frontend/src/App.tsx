@@ -8,6 +8,7 @@ import Login from './pages/Login'
 import ProductDetail from "./pages/ProductDetail";
 import CartPage from './pages/CartPage'
 import CategoryPage from './pages/CategoryPage'
+import CheckoutPage from './pages/CheckoutPage'
 
 
 
@@ -21,6 +22,7 @@ function App() {
           <Route path='/eshop' element={<Eshop />} />
           <Route path="/product/:id" element={<ProductDetail />} />
           <Route path="/cart" element={<CartPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/category/:categoryId" element={<CategoryPage />} />
           <Route path='/iflash' element={<Iflash />} />
           <Route path="/login" element={<Login />} />
