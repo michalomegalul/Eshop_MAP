@@ -6,6 +6,8 @@ import Iflash from './pages/iflash'
 import Register from "./pages/Register";
 import Login from './pages/Login'
 import ProductDetail from "./pages/ProductDetail";
+import CartPage from './pages/CartPage'
+import CategoryPage from './pages/CategoryPage'
 
 
 
@@ -18,6 +20,8 @@ function App() {
           <Route path='/cenik' element={<Cenik />} />
           <Route path='/eshop' element={<Eshop />} />
           <Route path="/product/:id" element={<ProductDetail />} />
+          <Route path="/cart" element={<CartPage />} />
+          <Route path="/category/:categoryId" element={<CategoryPage />} />
           <Route path='/iflash' element={<Iflash />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />

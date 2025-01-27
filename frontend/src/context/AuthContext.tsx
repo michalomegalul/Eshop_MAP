@@ -6,7 +6,7 @@ const BASE_URL = "http://localhost:5000/api";
 interface AuthContextType {
     isAuthenticated: boolean;
     user: { id: string; role: string; name: string } | null;
-    login: (token: string) => void;
+    login: () => void;
     logout: () => void;
 }
 
@@ -16,8 +16,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [user, setUser] = useState<{ id: string; role: string; name: string } | null>(null);
     const isAuthenticated = !!user;
 
-    const login = async (token: string) => {
-        localStorage.setItem("access_token", token);
+    const login = async () => {
         await fetchUser();
     };
 
@@ -27,9 +26,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const fetchUser = async () => {
-        const token = localStorage.getItem("access_token");
-        if (!token) return;
-
         try {
             const response = await axios.get(`${BASE_URL}/auth-check`, {
                 withCredentials: true,
@@ -40,6 +36,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             logout();
         }
     };
+    
 
     useEffect(() => {
         fetchUser(); // Fetch user on initial load

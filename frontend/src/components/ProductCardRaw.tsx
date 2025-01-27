@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import type { Product } from "../pages/eshop";
+import { useAuth } from "../context/AuthContext";
 
 interface ProductCardRawProps {
     product: Product;
@@ -7,15 +8,27 @@ interface ProductCardRawProps {
 
 const ProductCardRaw: React.FC<ProductCardRawProps> = ({ product }) => {
     const navigate = useNavigate();
-    const isLoggedIn = !!localStorage.getItem("token");
+    const { isAuthenticated } = useAuth();
 
-    const handleAddToCart = () => {
-        if (!isLoggedIn) {
-            navigate("/login"); 
-        } else {
-            console.log(`Added ${product.name} to the cart`);
+    const handleAddToCart = (e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent navigating to product detail
 
+        if (!isAuthenticated) {
+            navigate("/login");
+            return;
         }
+
+        const cart = JSON.parse(localStorage.getItem("cart") || "[]") as Product[];
+        const existingItem = cart.find((item) => item.id === product.id);
+
+        if (existingItem) {
+            existingItem.quantity = (existingItem.quantity || 1) + 1;
+        } else {
+            cart.push({ ...product, quantity: 1 });
+        }
+
+        localStorage.setItem("cart", JSON.stringify(cart));
+        console.log(`Added ${product.name} to the cart`);
     };
 
     return (
@@ -58,10 +71,7 @@ const ProductCardRaw: React.FC<ProductCardRawProps> = ({ product }) => {
                 <p className="text-accent font-semibold mb-4">Skladem {product.availability}</p>
 
                 <button
-                    onClick={(e) => {
-                        e.stopPropagation(); // Prevent navigation when clicking button
-                        handleAddToCart();
-                    }}
+                    onClick={handleAddToCart}
                     className="w-full bg-primary text-white text-sm font-bold py-2 rounded hover:bg-red-800 transition"
                 >
                     Do košíku

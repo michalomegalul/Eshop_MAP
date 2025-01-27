@@ -13,6 +13,7 @@ export interface Product {
     description: string;
     price: number;
     availability: string;  
+    quantity: number;
     imageUrl: string;      
     rating: number;        
 }
@@ -49,8 +50,9 @@ function Eshop() {
                     description: product.description,
                     price: product.price,
                     availability: product.stock_quantity > 0 ? "In Stock" : "Out of Stock",
+                    quantity: product.stock_quantity,
                     imageUrl: "/files/DP-logo-small.png",
-                    rating: 4.5,
+                    rating: 4.5
                 }));
 
                 setProducts(prevProducts => [...prevProducts, ...newProducts]);

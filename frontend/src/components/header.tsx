@@ -97,7 +97,7 @@ const Header = () => {
                 </nav>
             </div>
 
-            <a href='https://shop.dieselpower.cz/' target="_blank" rel="noopener noreferrer" className='hidden tablet:flex flex-row items-center bg-red-600 text-white px-6 py-3 gap-4 font-semibold rounded-[3px] hover:bg-red-800 transition-all duration-300'>
+            <a href='/#/eshop' target="_blank" rel="noopener noreferrer" className='hidden tablet:flex flex-row items-center bg-red-600 text-white px-6 py-3 gap-4 font-semibold rounded-[3px] hover:bg-red-800 transition-all duration-300'>
                 <img className='h-5' src="/files/icon-shop.png" alt="" />
                 <p>
                     E-Shop

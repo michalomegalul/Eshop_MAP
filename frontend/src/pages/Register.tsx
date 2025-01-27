@@ -37,7 +37,7 @@ function Register() {
                 });
 
                 if (loginResponse.status >= 200 && loginResponse.status <= 299) {
-                    login(loginResponse.data.access_token); // Save token in AuthContext
+                    login(); // Save token in AuthContext
                     navigate("/eshop");
                 }
             }

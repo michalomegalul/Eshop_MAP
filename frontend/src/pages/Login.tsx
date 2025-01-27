@@ -9,7 +9,7 @@ function Login() {
     const [formData, setFormData] = useState({ username: "", password: "" });
     const [error, setError] = useState("");
     const navigate = useNavigate();
-    const { login } = useAuth(); // Use AuthContext
+    const { login } = useAuth();
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -17,27 +17,22 @@ function Login() {
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        setError("");  
-        console.log("Form submitted with data:", formData); // Debugging log
+        setError("");
     
         try {
             const response = await axios.post(
                 "http://localhost:5000/api/login",
                 formData,
-                {
-                    withCredentials: true, // Ensure cookies are sent
-                    headers: { "Content-Type": "application/json" }, // Explicit JSON header
-                }
+                { withCredentials: true } // Important: Ensures cookies are used
             );
     
-            console.log("Login response:", response.data); // Log the response
+            console.log("Login response:", response.data);
     
             if (response.status === 200) {
-                login(response.data.access_token);
+                login(); // No need to pass token manually
                 navigate("/eshop");
             }
         } catch (err: unknown) {
-            // Type the error properly
             if (axios.isAxiosError(err)) {
                 console.error("Axios error:", err.response?.data || err.message);
                 setError(err.response?.data?.error || "Invalid credentials. Please try again.");
@@ -50,6 +45,7 @@ function Login() {
     
     
     
+    
 
     return (
         <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-bgdark transition duration-300 ease-in-out">
@@ -59,7 +55,7 @@ function Login() {
                 </h2>
                 <form onSubmit={handleSubmit}>
                     <InputField
-                        label="Username or Email"
+                        label="Username"
                         name="username"
                         type="text"
                         value={formData.username}

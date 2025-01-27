@@ -1,85 +1,57 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+
+const BASE_URL = "http://localhost:5000/api";
+
+interface Category {
+    id: string;
+    name: string;
+    parent_id: string | null;
+}
 
 const Sidebar = () => {
-    const categories = [
-        {
-            name: "Motorové díly",
-            subcategories: ["Brzdové kotouče", "Spojky", "Turbodmychadla", "Výfukové systémy"],
-        },
-        {
-            name: "Silikonové hadice a hadicové spony",
-            subcategories: ["T-kus silikonové hadice", "Redukce", "Hadicové objímky"],
-        },
-        {
-            name: "Softwarové úpravy",
-            subcategories: ["Chiptuning", "EGR vypnutí", "DPF řešení", "Start-Stop deaktivace"],
-        },
-        {
-            name: "Dieselservis",
-            subcategories: ["Diagnostika", "Čištění vstřikovačů", "Palivová čerpadla"],
-        },
-        {
-            name: "Autokosmetika a chemie",
-            subcategories: ["Čističe interiéru", "Leštěnky", "Šampony na auto"],
-        },
-        {
-            name: "Oleje a aditiva",
-            subcategories: ["Motorové oleje", "Aditiva nafta/benzín", "Převodové oleje"],
-        },
-        {
-            name: "Boutique / Doplňky",
-            subcategories: ["Trička", "Kšiltovky", "Samolepky"],
-        },
-        {
-            name: "Povinná a doporučená výbava",
-            subcategories: ["Lékárničky", "Výstražné trojúhelníky", "Tažné lana"],
-        },
-        {
-            name: "Servisní balíčky",
-            subcategories: ["Sady na výměnu oleje", "Sady na výměnu filtrů"],
-        },
-        {
-            name: "Brzdový systém",
-            subcategories: ["Brzdové destičky", "Brzdové kapaliny", "Sady brzd"],
-        },
-    ];
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
+    const navigate = useNavigate();
 
-    const [hoveredCategory, setHoveredCategory] = useState<number | null>(null);
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const response = await axios.get(`${BASE_URL}/categories`);
+                setCategories(response.data);
+            } catch (error) {
+                console.error("Failed to fetch categories:", error);
+            }
+        };
+
+        fetchCategories();
+    }, []);
+
+    const handleCategoryClick = (categoryId: string) => {
+        navigate(`/category/${categoryId}`);
+    };
 
     return (
         <aside className="bg-white dark:bg-gray-800 w-64 p-4 shadow-lg rounded-lg">
             <nav>
                 <ul className="space-y-2">
-                    {categories.map((category, index) => (
+                    {categories.map((category) => (
                         <li
-                            key={index}
+                            key={category.id}
                             className="relative group"
-                            onMouseEnter={() => setHoveredCategory(index)}
+                            onMouseEnter={() => setHoveredCategory(category.id)}
                             onMouseLeave={() => setHoveredCategory(null)}
+                            
                         >
-                            <div
-                                className={`block p-3 rounded-lg bg-white dark:bg-gray-700 shadow-md text-gray-800 dark:text-white transition-all duration-300 hover:bg-gray-200 dark:hover:bg-gray-600 ${hoveredCategory === index ? "bg-gray-200 dark:bg-gray-600" : ""
-                                    }`}
-                            >
+                            <button
+                                onClick={() => handleCategoryClick(category.id)}
+                                className={`block w-full text-left p-3 rounded-lg bg-white dark:bg-gray-700 shadow-md text-gray-800 dark:text-white transition-all duration-300 hover:bg-gray-200 dark:hover:bg-gray-600 ${
+                                    hoveredCategory === category.id ? "bg-gray-300 dark:bg-gray-500" : ""
+                                }`}
+                        >
                                 {category.name}
-                            </div>
-                            {hoveredCategory === index && (
-                                <ul
-                                    className="absolute left-full top-0 max-w-[calc(100vw-16rem)] bg-white dark:bg-gray-700 shadow-lg p-4 space-y-2 rounded-lg z-50"
-                                    style={{ width: "max(200px, 16rem)" }}
-                                >
-                                    {category.subcategories.map((subcategory, subIndex) => (
-                                        <li key={subIndex}>
-                                            <a
-                                                href="#"
-                                                className="block px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
-                                            >
-                                                {subcategory}
-                                            </a>
-                                        </li>
-                                    ))}
-                                </ul>
-                            )}
+                            </button>
                         </li>
                     ))}
                 </ul>
