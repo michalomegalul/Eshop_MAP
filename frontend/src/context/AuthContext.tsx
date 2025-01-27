@@ -18,7 +18,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const login = async (token: string) => {
         localStorage.setItem("access_token", token);
-        await fetchUser();  // Wait until user data is fetched
+        await fetchUser();
     };
 
     const logout = () => {
@@ -32,12 +32,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         try {
             const response = await axios.get(`${BASE_URL}/auth-check`, {
-                headers: { Authorization: `Bearer ${token}` },
+                withCredentials: true,
             });
-            setUser(response.data); // Set user details from API response
+            setUser(response.data);
         } catch (error) {
             console.error("Auth check failed:", error);
-            logout(); // If auth fails, remove token and log out
+            logout();
         }
     };
 
@@ -50,7 +50,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             {children}
         </AuthContext.Provider>
     );
-};
+}
 
 export const useAuth = () => {
     const context = useContext(AuthContext);

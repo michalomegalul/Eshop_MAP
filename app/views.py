@@ -146,15 +146,17 @@ def get_all_categories():
 def get_product_by_id(product_id):
     """Fetch a single product by its ID."""
     try:
+        # Log or print to check the UUID format
+        logger.info(f"Received product ID: {product_id}")
+
         product = Product.query.get_or_404(product_id)
-        
+
         product_data = {
             "id": str(product.id),
             "name": product.name,
             "description": product.description,
             "price": float(product.price),
             "availability": "In Stock" if product.stock_quantity > 0 else "Out of Stock",
-            "imageUrl": product.image_url if product.image_url else "/files/DP-logo-small.png",
             "rating": product.rating if hasattr(product, "rating") else 4.5,  # Default rating
             "category_id": str(product.category_id),
             "created_at": product.created_at,
@@ -162,10 +164,14 @@ def get_product_by_id(product_id):
         }
         
         return jsonify(product_data), 200
+    
 
     except Exception as e:
         logger.error(f"Error fetching product {product_id}: {e}")
+        print(f"Error fetching product {product_id}: {e}")
         return jsonify({"error": "Failed to fetch product"}), 500
+    
+
 
 
 
@@ -307,31 +313,34 @@ def delete_user(user_id):
 @api_bp.route("/login", methods=["POST"])
 def login():
     """Authenticate user and return JWT in secure cookies."""
-    data = request.json
+    data = request.get_json()  # Ensure JSON parsing
+    print("Received login data:", data)  # Debugging log
+
     if not data or not data.get("username") or not data.get("password"):
+        print("Missing username or password")
         return jsonify({"error": "Missing username or password"}), 400
 
     user = User.query.filter_by(username=data["username"]).first()
-    if user and user.check_password(data["password"]):
+    
+    if not user:
+        print("User not found")
+        return jsonify({"error": "Invalid username or password"}), 401
+
+    if user.check_password(data["password"]):
         additional_claims = {"role": user.role, "name": user.first_name}  
-        access_token = create_access_token(
-            identity=user.id, 
-            additional_claims=additional_claims,
-            expires_delta=datetime.timedelta(minutes=15)  # Short lifespan
-        )
-        refresh_token = create_refresh_token(
-            identity=user.id, 
-            expires_delta=datetime.timedelta(days=7)  # Long lifespan
-        )
+        access_token = create_access_token(identity=user.id, additional_claims=additional_claims, expires_delta=datetime.timedelta(minutes=15))
+        refresh_token = create_refresh_token(identity=user.id, expires_delta=datetime.timedelta(days=7))
 
-        # Create response and set cookies
         response = make_response(jsonify({"message": "Login successful"}))
-        response.set_cookie("access_token", access_token, httponly=True, secure=True, samesite="Strict")
-        response.set_cookie("refresh_token", refresh_token, httponly=True, secure=True, samesite="Strict")
+        response.set_cookie("access_token", access_token, httponly=True, secure=False, samesite="Lax")
+        response.set_cookie("refresh_token", refresh_token, httponly=True, secure=False, samesite="Lax")
 
+        print("Login successful, tokens set")
         return response, 200
 
+    print("Invalid password")
     return jsonify({"error": "Invalid username or password"}), 401
+
 
 
 @api_bp.route("/refresh", methods=["POST"])

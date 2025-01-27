@@ -19,15 +19,27 @@ function ProductDetail() {
     const navigate = useNavigate();
     const [product, setProduct] = useState<Product | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
     const isLoggedIn = !!localStorage.getItem("token"); // Check login status
 
     useEffect(() => {
         const fetchProduct = async () => {
             try {
-                const response = await axios.get(`${BASE_URL}products/${id}`);
+                // Log the product ID for debugging
+                console.log(`Fetching product from URL: ${BASE_URL}products/${id}`);
+
+                const token = localStorage.getItem("token");
+
+                // Add the token to the headers if it's present
+                const response = await axios.get(`${BASE_URL}products/${id}`, {
+                    headers: token ? { Authorization: `Bearer ${token}` } : {},
+                });
+
+                console.log("Product data:", response.data); // Log response data for debugging
                 setProduct(response.data);
-            } catch (error) {
+            } catch (error: any) {
                 console.error("Error fetching product:", error);
+                setError("Failed to fetch product. Please try again later.");
             } finally {
                 setLoading(false);
             }
@@ -46,9 +58,10 @@ function ProductDetail() {
     };
 
     if (loading) return <div>Loading...</div>;
+    if (error) return <div>{error}</div>;
     if (!product) return <div>Product not found</div>;
 
-      (
+    return (
         <div className="container mx-auto p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <img src={product.imageUrl} alt={product.name} className="w-full h-80 object-contain" />

@@ -19,7 +19,7 @@ from flask_cors import CORS
 
 def create_app():
     app = Flask(__name__)
-    CORS(app, origins="http://localhost:8000", supports_credentials=True)
+    CORS(app, origins=["http://localhost:5173", "http://localhost:8000"], supports_credentials=True)
 
     # Set up Stripe API keys from environment variables
     stripe.api_key = os.getenv('STRIPE_SECRET_KEY')  # Secret key for backend
@@ -43,6 +43,9 @@ def create_app():
     db.init_app(app)
     bcrypt.init_app(app)
     jwt.init_app(app)
+    app.config['JWT_TOKEN_LOCATION'] = ['cookies']  # Specify that the JWT will be located in cookies
+    app.config['JWT_ACCESS_COOKIE_NAME'] = 'access_token'  # Optional, set cookie name for access token
+    app.config['JWT_REFRESH_COOKIE_NAME'] = 'refresh_token'  # Optional, set cookie name for refresh token
     Migrate(app, db) 
     print("logging in")
     print("DB INITIALIZED migrations")
@@ -63,14 +66,14 @@ def create_app():
 
     from .views import api_bp
     app.register_blueprint(api_bp, url_prefix="/api")
-    @app.route("/site-map")
-    def site_map():
-        links = []
-        for rule in app.url_map.iter_rules():
-            if "GET" in rule.methods and has_no_empty_params(rule):
-                url = url_for(rule.endpoint, **(rule.defaults or {}))
-                links.append((url, rule.endpoint))
-        return {"links": links}
+    # @app.route("/site-map")
+    # def site_map():
+    #     links = []
+    #     for rule in app.url_map.iter_rules():
+    #         if "GET" in rule.methods and has_no_empty_params(rule):
+    #             url = url_for(rule.endpoint, **(rule.defaults or {}))
+    #             links.append((url, rule.endpoint))
+    #     return {"links": links}
 
     return app
 

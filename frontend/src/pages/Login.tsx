@@ -18,24 +18,37 @@ function Login() {
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setError("");  
-        console.log("Form submitted");
+        console.log("Form submitted with data:", formData); // Debugging log
     
         try {
             const response = await axios.post(
                 "http://localhost:5000/api/login",
                 formData,
-                { withCredentials: true }
+                {
+                    withCredentials: true, // Ensure cookies are sent
+                    headers: { "Content-Type": "application/json" }, // Explicit JSON header
+                }
             );
+    
+            console.log("Login response:", response.data); // Log the response
     
             if (response.status === 200) {
                 login(response.data.access_token);
                 navigate("/eshop");
             }
-        } catch (error) {
-            console.error("Error logging in:", error);
-            setError("Invalid credentials. Please try again.");
+        } catch (err: unknown) {
+            // Type the error properly
+            if (axios.isAxiosError(err)) {
+                console.error("Axios error:", err.response?.data || err.message);
+                setError(err.response?.data?.error || "Invalid credentials. Please try again.");
+            } else {
+                console.error("Unexpected error:", err);
+                setError("An unexpected error occurred.");
+            }
         }
     };
+    
+    
     
 
     return (
