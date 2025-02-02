@@ -1,4 +1,5 @@
 import { HashRouter as Router, Routes, Route } from 'react-router-dom'
+// import { lazy, Suspense } from 'react'
 import Home from './pages/home'
 import Cenik from './pages/cenik'
 import Eshop from './pages/eshop'
@@ -9,7 +10,21 @@ import ProductDetail from "./pages/ProductDetail";
 import CartPage from './pages/CartPage'
 import CategoryPage from './pages/CategoryPage'
 import CheckoutPage from './pages/CheckoutPage'
+import SuccessPage from './pages/SuccessPage'
 
+// const LazyHome = lazy(() => import('./pages/home'));
+// const LazyCenik = lazy(() => import('./pages/cenik'));
+// const LazyEshop = lazy(() => import('./pages/eshop'));
+// const LazyIflash = lazy(() => import('./pages/iflash'));
+// const LazyRegister = lazy(() => import('./pages/Register'));
+// const LazyLogin = lazy(() => import('./pages/Login'));
+// const LazyProductDetail = lazy(() => import('./pages/ProductDetail'));
+// const LazyCartPage = lazy(() => import('./pages/CartPage'));
+// const LazyCategoryPage = lazy(() => import('./pages/CategoryPage'));
+// const LazyCheckoutPage = lazy(() => import('./pages/CheckoutPage'));
+// const LazySuccessPage = lazy(() => import('./pages/SuccessPage'));
+
+// const SuspenseFallback = () => <div>Loading...</div>;
 
 
 function App() {
@@ -27,6 +42,7 @@ function App() {
           <Route path='/iflash' element={<Iflash />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/success" element={<SuccessPage />} />
         </Routes>
       </Router>
     </>

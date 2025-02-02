@@ -3,7 +3,7 @@ from .models import db, User, Product, Order, ProductReview, Category, OrderStat
 import os
 import json
 from flask_jwt_extended import (
-    JWTManager, create_access_token, create_refresh_token, jwt_required, get_jwt, get_jwt_identity
+    JWTManager, create_access_token, create_refresh_token, jwt_required, get_jwt, get_jwt_identity, get_csrf_token
 )
 import datetime
 import stripe
@@ -335,9 +335,23 @@ def login():
         response = make_response(jsonify({"message": "Login successful"}))
         response.set_cookie("access_token", access_token, httponly=True, secure=False, samesite="Lax")
         response.set_cookie("refresh_token", refresh_token, httponly=True, secure=False, samesite="Lax")
+        response.set_cookie(
+        "csrf_access_token", 
+        get_csrf_token(access_token), 
+        secure=False, 
+        samesite="Lax"
+        )
+        response.set_cookie(
+        "csrf_refresh_token", 
+        get_csrf_token(refresh_token),  
+        secure=False, 
+        samesite="Lax"
+
+        )
 
         print("Login successful, tokens set")
         return response, 200
+
 
     print("Invalid password")
     return jsonify({"error": "Invalid username or password"}), 401
@@ -377,15 +391,15 @@ def logout():
     return response, 200
 
 
-@api_bp.route("/protected", methods=["GET"])
-@jwt_required()
-def protected():
-    """A protected route that requires a valid JWT."""
-    claims = get_jwt()
-    user_role = claims.get("role", "user")
-    user_name = claims.get("name", "unknown")
+# @api_bp.route("/protected", methods=["GET"])
+# @jwt_required()
+# def protected():
+#     """A protected route that requires a valid JWT."""
+#     claims = get_jwt()
+#     user_role = claims.get("role", "user")
+#     user_name = claims.get("name", "unknown")
 
-    return jsonify({"user_name": user_name, "user_role": user_role}), 200
+#     return jsonify({"user_name": user_name, "user_role": user_role}), 200
 
 
 
@@ -503,34 +517,39 @@ def get_product_reviews(product_id):
         logger.error(f"Error fetching reviews for product {product_id}: {e}")
         return jsonify({"error": "Failed to fetch reviews"}), 500
 
-# ---------- Stripe Endpoints ----------
-@api_bp.route("/create-payment-intent", methods=["POST"])
-@jwt_required()
+# ---------- Payment Intent Endpoint ----------
 def create_payment_intent():
-    user_id = get_jwt_identity()
-    data = request.get_json()
-    amount = data.get("amount")
-    products = data.get("products", [])
+    try:
+        user_id = get_jwt_identity()
+        data = request.get_json()
+        amount = data.get("amount")
+        products = data.get("products", [])
 
-    if not amount:
-        return jsonify({"error": "Amount is required"}), 400
+        if not amount:
+            logger.error("Amount is missing in the request")
+            return jsonify({"error": "Amount is required"}), 400
 
-    intent = stripe.PaymentIntent.create(
-        amount=amount,
-        currency="usd",
-        metadata={"user_id": str(user_id), "products": json.dumps(products)}
-    )
+        # Create the Stripe PaymentIntent
+        intent = stripe.PaymentIntent.create(
+            amount=amount,
+            currency="usd",
+            metadata={"user_id": str(user_id), "products": json.dumps(products)}
+        )
+        return jsonify({"clientSecret": intent.client_secret})
+    except Exception as e:
+        logger.exception("Error creating payment intent:")
+        return jsonify({"error": "Failed to create payment intent"}), 500
 
-    return jsonify({"clientSecret": intent.client_secret})
 
-# ---------- Webhooks endpint ----------
+# ---------- Stripe Webhook Endpoint ----------
 @api_bp.route("/stripe/webhook", methods=["POST"])
 def stripe_webhook():
     payload = request.get_data(as_text=True)
     sig_header = request.headers.get("Stripe-Signature")
-
     try:
-        event = stripe.Webhook.construct_event(payload, sig_header, os.getenv("STRIPE_WEBHOOK_SECRET"))
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, os.getenv("STRIPE_WEBHOOK_SECRET")
+        )
 
         if event["type"] == "payment_intent.succeeded":
             session = event["data"]["object"]
@@ -538,16 +557,18 @@ def stripe_webhook():
             products = json.loads(session["metadata"]["products"])
             total_price = session["amount"] / 100
 
-            # Store order in database
+            # Store order in the database
             new_order = Order(user_id=user_id, total=total_price, status=OrderStatus.COMPLETED)
             db.session.add(new_order)
             db.session.commit()
+            logger.info("Order stored via webhook for user_id %s", user_id)
 
         return jsonify({"message": "Webhook received"}), 200
-
     except Exception as e:
+        logger.exception("Webhook processing failed:")
         return jsonify({"error": "Webhook processing failed"}), 400
 
+# ---------- Create Order Endpoint ----------
 @api_bp.route("/orders", methods=["POST"])
 @jwt_required()
 def create_order():
@@ -556,16 +577,18 @@ def create_order():
         data = request.get_json()
 
         if not data or "products" not in data or "total_price" not in data:
+            logger.error("Invalid request data for order creation: %s", data)
             return jsonify({"error": "Invalid request data"}), 400
 
         new_order = Order(user_id=user_id, total=data["total_price"], status=OrderStatus.COMPLETED)
-
         db.session.add(new_order)
         db.session.commit()
 
+        logger.info("Order created successfully for user_id %s", user_id)
         return jsonify({"message": "Order placed successfully", "order_id": new_order.id}), 201
 
     except Exception as e:
+        logger.exception("Error creating order:")
         return jsonify({"error": str(e)}), 500
 
 
@@ -614,3 +637,4 @@ def create_order():
 #     except Exception as e:
 #         logger.error(f"Error deleting coupon {coupon_id}: {e}")
 #         return jsonify({"error": "Failed to delete coupon"}), 500
+#helpers

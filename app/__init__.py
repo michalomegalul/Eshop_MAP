@@ -1,13 +1,12 @@
 import atexit
 import os
-from flask import Flask, url_for, request
+from flask import Flask, url_for, request, jsonify
 import logging
 from flask_migrate import Migrate
 from .views import jwt
 import stripe
 from .models import bcrypt, db
 from flask_cors import CORS
-
 # Inicializace rozšíření
 
 
@@ -23,6 +22,8 @@ def create_app():
 
     # Set up Stripe API keys from environment variables
     stripe.api_key = os.getenv('STRIPE_SECRET_KEY')  # Secret key for backend
+    print("STRIPE SECRET KEY")
+    print(os.getenv('STRIPE_SECRET_KEY'))
     app.config['STRIPE_PUBLIC_KEY'] = os.getenv('STRIPE_PUBLIC_KEY')  # Public key for frontend
 
     # @app.before_request
@@ -43,9 +44,11 @@ def create_app():
     db.init_app(app)
     bcrypt.init_app(app)
     jwt.init_app(app)
-    app.config['JWT_TOKEN_LOCATION'] = ['cookies']  # Specify that the JWT will be located in cookies
-    app.config['JWT_ACCESS_COOKIE_NAME'] = 'access_token'  # Optional, set cookie name for access token
-    app.config['JWT_REFRESH_COOKIE_NAME'] = 'refresh_token'  # Optional, set cookie name for refresh token
+    app.config['JWT_TOKEN_LOCATION'] = ['cookies']
+    app.config['JWT_ACCESS_COOKIE_NAME'] = 'access_token'
+    app.config['JWT_REFRESH_COOKIE_NAME'] = 'refresh_token'
+    app.config["JWT_COOKIE_CSRF_PROTECT"] = True
+    app.config["JWT_CSRF_CHECK_FORM"] = True  
     Migrate(app, db) 
     print("logging in")
     print("DB INITIALIZED migrations")
@@ -62,10 +65,18 @@ def create_app():
         except Exception as e:
             print(f"Failed to apply migrations: {e}")
 
-    # Register the blueprint for your API routes
+        # Register the blueprint for your API routes
+    @app.errorhandler(Exception)
+    def handle_exception(e):
+        app.logger.exception("An unhandled exception occurred: %s", e)
+        # Optionally, return a JSON error message:
+        response = jsonify({"error": "Internal Server Error", "message": str(e)})
+        response.status_code = 500
+        return response
 
     from .views import api_bp
     app.register_blueprint(api_bp, url_prefix="/api")
+    
     # @app.route("/site-map")
     # def site_map():
     #     links = []

@@ -8,6 +8,8 @@ print(os.getenv("DATABASE_URL"))
 
 
 class Config:
+    Debug = True
+    Testing = False
     SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SECRET_KEY = os.getenv("FLASK_SECRET_KEY", "default_secret_key")

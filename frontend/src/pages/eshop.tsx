@@ -1,9 +1,11 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 import Sidebar from "../components/sidebar-eshop";
 import Headereshop from "../components/header-eshop";
 import ProductCardRaw from "../components/ProductCardRaw";
 import Footer from "../components/footer";
+import { useScroll } from "../context/ScrollContext";
 
 const BASE_URL = 'http://localhost:5000/api/';
 
@@ -19,10 +21,25 @@ export interface Product {
 }
 
 function Eshop() {
+    const { saveScrollPosition, restoreScrollPosition } = useScroll();
+    const location = useLocation();
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const [page, setPage] = useState<number>(1);
     const [hasMore, setHasMore] = useState<boolean>(true);
+    const initialLoad = useRef<boolean>(true);
+    useEffect(() => {
+        if (initialLoad.current) {
+            restoreScrollPosition(location.pathname);
+            initialLoad.current = false;
+        }
+    }, [location.pathname, restoreScrollPosition]);
+
+    useEffect(() => {
+        return () => {
+            saveScrollPosition(location.pathname);
+        };
+    }, [location.pathname, saveScrollPosition]);
 
     const observer = useRef<IntersectionObserver | null>(null);
     const lastProductRef = useCallback((node: HTMLDivElement | null) => {
