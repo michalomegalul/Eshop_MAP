@@ -24,7 +24,7 @@ def create_app():
     stripe.api_key = os.getenv('STRIPE_SECRET_KEY')  # Secret key for backend
     print("STRIPE SECRET KEY")
     print(os.getenv('STRIPE_SECRET_KEY'))
-    app.config['STRIPE_PUBLIC_KEY'] = os.getenv('STRIPE_PUBLIC_KEY')  # Public key for frontend
+    # app.config['STRIPE_PUBLIC_KEY'] = os.getenv('STRIPE_PUBLIC_KEY')  # Public key for frontend
 
     # @app.before_request
     # def log_request_info():

@@ -6,7 +6,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 // Replace with your actual publishable key
-const stripePromise = loadStripe("your-publishable-key");
+const stripePromise = loadStripe("pk_test_51Qo5STPsseHpnxsDvD1Bz2MgnmEb9QAEHsNiRBo0gq9EH64cjspzUKDalNaXOKU9tMNLGVG7Ae4ZJEhBzjlwUJBL00fhsd4Cag");
 
 type CartItem = {
   id: string;
@@ -37,7 +37,7 @@ const CheckoutForm: React.FC = () => {
 
     axios
       .post(
-        "http://localhost:5000/api/create-payment-intent",
+        "https://localhost:5000/api/create-payment-intent",
         {
           amount,
           products: cart.map((item: CartItem) => ({

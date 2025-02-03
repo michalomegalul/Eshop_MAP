@@ -83,6 +83,12 @@ function Eshop() {
 
         fetchProducts();
     }, [page]);
+    
+    useEffect(() => {
+        if (page === 1) {
+            window.scrollTo(0, 0);
+        }
+    }, [page]);
 
     return (
         <main className="flex flex-col font-roboto bg-bglight tablet:px-[4%] pc:px-[10%]">

@@ -518,6 +518,7 @@ def get_product_reviews(product_id):
         return jsonify({"error": "Failed to fetch reviews"}), 500
 
 # ---------- Payment Intent Endpoint ----------
+@api_bp.route("/create-payment-intent", methods=["POST"])
 def create_payment_intent():
     try:
         user_id = get_jwt_identity()
