@@ -11,6 +11,8 @@ import CartPage from './pages/CartPage'
 import CategoryPage from './pages/CategoryPage'
 import CheckoutPage from './pages/CheckoutPage'
 import SuccessPage from './pages/SuccessPage'
+import CancelPage from './pages/CancelPage'
+import OrdersPage from './pages/OrdersPage'
 
 // const LazyHome = lazy(() => import('./pages/home'));
 // const LazyCenik = lazy(() => import('./pages/cenik'));
@@ -43,6 +45,8 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/success" element={<SuccessPage />} />
+          <Route path="/cancel" element={<CancelPage />} />
+          <Route path="/order" element={<OrdersPage />} />
         </Routes>
       </Router>
     </>

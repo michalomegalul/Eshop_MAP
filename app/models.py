@@ -253,6 +253,13 @@ class AuditLog(Model):
     record_id = db.Column(UUID(as_uuid=True), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
+class OrderLike(Model):
+    __tablename__ = "order_likes"
+
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    order_id = db.Column(UUID(as_uuid=True), db.ForeignKey("orders.id"), nullable=False)
+    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey("users.id"), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
 
 

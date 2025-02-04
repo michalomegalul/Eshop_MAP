@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request, render_template, make_response
-from .models import db, User, Product, Order, ProductReview, Category, OrderStatus #, Coupon
+from .models import db, User, Product, Order, ProductReview, Category, OrderLike, OrderItem, OrderPayment, OrderStatus#, Coupon
 import os
 import json
 from flask_jwt_extended import (
@@ -518,55 +518,114 @@ def get_product_reviews(product_id):
         return jsonify({"error": "Failed to fetch reviews"}), 500
 
 # ---------- Payment Intent Endpoint ----------
-@api_bp.route("/create-payment-intent", methods=["POST"])
-def create_payment_intent():
+@api_bp.route("/create-checkout-session", methods=["POST"])
+@jwt_required()
+def create_checkout_session():
     try:
         user_id = get_jwt_identity()
         data = request.get_json()
-        amount = data.get("amount")
-        products = data.get("products", [])
 
-        if not amount:
-            logger.error("Amount is missing in the request")
-            return jsonify({"error": "Amount is required"}), 400
+        if not data or "cart" not in data:
+            return jsonify({"error": "Invalid cart data"}), 400
 
-        # Create the Stripe PaymentIntent
-        intent = stripe.PaymentIntent.create(
-            amount=amount,
-            currency="usd",
-            metadata={"user_id": str(user_id), "products": json.dumps(products)}
+        cart_items = data["cart"]
+        line_items = []
+        product_metadata = []
+
+        for item in cart_items:
+            line_items.append({
+                "price_data": {
+                    "currency": "usd",
+                    "product_data": {
+                        "name": item["name"]
+                    },
+                    "unit_amount": int(item["price"] * 100),  # Convert dollars to cents
+                },
+                "quantity": item["quantity"],
+            })
+            product_metadata.append({
+                "id": item["id"],
+                "name": item["name"],
+                "price": item["price"],
+                "quantity": item["quantity"]
+            })
+
+        # ✅ Create checkout session with metadata
+        session = stripe.checkout.Session.create(
+            payment_method_types=["card"],
+            line_items=line_items,
+            mode="payment",
+            success_url="http://localhost:8000/#/success",
+            cancel_url="http://localhost:8000/#/cancel",
+            metadata={
+                "user_id": user_id,
+                "products": json.dumps(product_metadata)  # Convert list to JSON string
+            }
         )
-        return jsonify({"clientSecret": intent.client_secret})
-    except Exception as e:
-        logger.exception("Error creating payment intent:")
-        return jsonify({"error": "Failed to create payment intent"}), 500
 
+        return jsonify({"url": session.url}), 200
+
+    except Exception as e:
+        logger.exception("Error creating checkout session:")
+        return jsonify({"error": str(e)}), 500
 
 # ---------- Stripe Webhook Endpoint ----------
 @api_bp.route("/stripe/webhook", methods=["POST"])
 def stripe_webhook():
     payload = request.get_data(as_text=True)
     sig_header = request.headers.get("Stripe-Signature")
+
     try:
         event = stripe.Webhook.construct_event(
             payload, sig_header, os.getenv("STRIPE_WEBHOOK_SECRET")
         )
 
-        if event["type"] == "payment_intent.succeeded":
+        # ✅ Check if the event is a completed checkout session
+        if event["type"] == "checkout.session.completed":
             session = event["data"]["object"]
-            user_id = session["metadata"]["user_id"]
-            products = json.loads(session["metadata"]["products"])
-            total_price = session["amount"] / 100
 
-            # Store order in the database
-            new_order = Order(user_id=user_id, total=total_price, status=OrderStatus.COMPLETED)
+            user_id = session["metadata"]["user_id"]
+            products = json.loads(session["metadata"]["products"])  # Product data from metadata
+            total_price = session["amount_total"] / 100  # Convert cents to dollars
+            payment_intent = session["payment_intent"]
+            
+            # ✅ Create new order
+            new_order = Order(
+                user_id=user_id,
+                total=total_price,
+                status=OrderStatus.COMPLETED,
+                created_at=datetime.utcnow(),
+                updated_at=datetime.utcnow()
+            )
             db.session.add(new_order)
+            db.session.flush()  # Get order.id before committing
+
+            # ✅ Add order items
+            for item in products:
+                order_item = OrderItem(
+                    order_id=new_order.id,
+                    product_id=item["id"],  # Ensure product ID exists
+                    quantity=item["quantity"],
+                    price=item["price"]
+                )
+                db.session.add(order_item)
+
+            # ✅ Save payment details
+            order_payment = OrderPayment(
+                order_id=new_order.id,
+                payment_intent=payment_intent,
+                status="paid",
+                created_at=datetime.utcnow()
+            )
+            db.session.add(order_payment)
+
             db.session.commit()
-            logger.info("Order stored via webhook for user_id %s", user_id)
+            logger.info(f"✅ Order {new_order.id} created for user {user_id}")
 
         return jsonify({"message": "Webhook received"}), 200
+
     except Exception as e:
-        logger.exception("Webhook processing failed:")
+        logger.exception("❌ Webhook processing failed:")
         return jsonify({"error": "Webhook processing failed"}), 400
 
 # ---------- Create Order Endpoint ----------
@@ -591,6 +650,52 @@ def create_order():
     except Exception as e:
         logger.exception("Error creating order:")
         return jsonify({"error": str(e)}), 500
+
+@api_bp.route("/orders", methods=["GET"])
+@jwt_required()
+def get_user_orders():
+    try:
+        user_id = get_jwt_identity()
+        orders = Order.query.filter_by(user_id=user_id).all()
+        orders_data = [
+            {
+                "id": str(order.id),
+                "total": order.total,
+                "status": order.status,
+                "created_at": order.created_at
+            }
+            for order in orders
+        ]
+        return jsonify(orders_data), 200
+    except Exception as e:
+        logger.exception("Error fetching user orders:")
+        return jsonify({"error": "Failed to fetch orders"}), 500
+
+@api_bp.route("/orders/<uuid:order_id>/like", methods=["POST"])
+@jwt_required()
+def like_order(order_id):
+    try:
+        user_id = get_jwt_identity()
+
+        # OPTIONAL: Check if the user has already liked this order.
+        # This enforces “one like per order per user.”
+        existing_like = OrderLike.query.filter_by(order_id=order_id, user_id=user_id).first()
+        if existing_like:
+            return jsonify({"message": "Order already liked"}), 200
+
+        # Create a new OrderLike record.
+        new_like = OrderLike(order_id=order_id, user_id=user_id)
+        db.session.add(new_like)
+        db.session.commit()
+
+        # Count the total likes for this order.
+        like_count = OrderLike.query.filter_by(order_id=order_id).count()
+
+        return jsonify({"message": "Order liked", "likes": like_count}), 200
+
+    except Exception as e:
+        logger.exception("Error liking order:")
+        return jsonify({"error": "Failed to like order"}), 500
 
 
 # ---------- Coupon Endpoints ----------
