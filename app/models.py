@@ -29,7 +29,6 @@ class User(db.Model):
     status = db.Column(db.String(20), nullable=True, comment="Possible values: active, inactive, suspended")
     
     addresses = db.relationship("UserAddress", backref="user", lazy=True)
-    payment_methods = db.relationship("UserPaymentMethod", backref="user", lazy=True)
     orders = db.relationship("Order", backref="user", lazy=True)
     shopping_cart = db.relationship("ShoppingCart", backref="user", uselist=False, cascade="all, delete-orphan")
 
@@ -40,7 +39,7 @@ class User(db.Model):
         # Hash the password using Flask-Bcrypt
         self.password_hash = bcrypt.generate_password_hash(password).decode('utf-8')
         print(self.password_hash)  # Optional: Remove in production for security reasons
-
+ 
     def check_password(self, password: str) -> bool:
         """
         Checks the password against the stored hash
@@ -77,15 +76,15 @@ class UserAddress(Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
-class UserPaymentMethod(Model):
-    __tablename__ = "user_payment_methods"
+# class UserPaymentMethod(Model):
+#     __tablename__ = "user_payment_methods"
 
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey("users.id"), nullable=False)
-    payment_type = db.Column(db.String(20), nullable=False)
-    provider = db.Column(db.String(80), nullable=False)
-    account_no = db.Column(db.String(120), nullable=False)
-    expiry = db.Column(db.Date, nullable=False)
+#     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+#     user_id = db.Column(UUID(as_uuid=True), db.ForeignKey("users.id"), nullable=False)
+#     payment_type = db.Column(db.String(20), nullable=False)
+#     provider = db.Column(db.String(80), nullable=False)
+#     account_no = db.Column(db.String(120), nullable=False)
+#     expiry = db.Column(db.Date, nullable=False)
 
 
 class Category(Model):
@@ -156,8 +155,8 @@ class Order(db.Model):
     user_id = db.Column(db.UUID(as_uuid=True), db.ForeignKey("users.id"), nullable=False)
     total = db.Column(db.Numeric(10, 2), nullable=False)
     status = db.Column(db.Enum(OrderStatus), nullable=False, default=OrderStatus.PENDING)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
 
     order_items = db.relationship("OrderItem", backref="order", lazy="joined")
     payment = db.relationship("OrderPayment", backref="order", uselist=False, cascade="all, delete-orphan")
@@ -196,7 +195,7 @@ class OrderPayment(Model):
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     order_id = db.Column(UUID(as_uuid=True), db.ForeignKey("orders.id"), nullable=False)
-    payment_method_id = db.Column(UUID(as_uuid=True), db.ForeignKey("user_payment_methods.id"), nullable=False)
+    payment_method_id = db.Column(UUID(as_uuid=True), nullable=True)
     amount = db.Column(db.Numeric(10, 2), nullable=False)
     status = db.Column(db.String(20), nullable=False, comment="Possible values: pending, completed, failed, refunded")
     transaction_id = db.Column(db.String(255), nullable=True)  # Store Stripe transaction ID here

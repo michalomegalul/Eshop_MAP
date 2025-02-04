@@ -535,7 +535,7 @@ def create_checkout_session():
         for item in cart_items:
             line_items.append({
                 "price_data": {
-                    "currency": "usd",
+                    "currency": "czk",
                     "product_data": {
                         "name": item["name"]
                     },
@@ -565,7 +565,7 @@ def create_checkout_session():
         return jsonify({"url": session.url}), 200
 
     except Exception as e:
-        print("Error creating checkout session:")
+        print("Error creating checkout session:", e)
         return jsonify({"error": str(e)}), 500
 
 # ---------- Stripe Webhook Endpoint ----------
@@ -573,63 +573,75 @@ def create_checkout_session():
 def stripe_webhook():
     payload = request.get_data(as_text=True)
     sig_header = request.headers.get("Stripe-Signature")
-
-    # Debugging with print statements to track payload and signature
-    print("Received webhook: Payload:", payload)
-    print("Received webhook: Stripe-Signature:", sig_header)
+    print("Received webhook:", payload)
 
     try:
-        # Try constructing the event from the payload and signature
         event = stripe.Webhook.construct_event(
             payload, sig_header, os.getenv("STRIPE_WEBHOOK_SECRET")
         )
-        
 
         if event["type"] == "checkout.session.completed":
-            print(os.getenv("STRIPE_WEBHOOK_SECRET"))
-            
+            print("Processing checkout.session.completed event")
+
             session = event["data"]["object"]
+            metadata = session.get("metadata", {})
 
-            user_id = session["metadata"]["user_id"]
-            products = json.loads(session["metadata"]["products"])  # Product data from metadata
-            total_price = session["amount_total"] / 100  # Convert cents to dollars
-            payment_intent = session["payment_intent"]
+            # Check if required metadata exists
+            if "user_id" not in metadata or "products" not in metadata:
+                print("❌ Missing metadata in session:", metadata)
+                return jsonify({"error": "Missing metadata"}), 400
 
-            new_order = Order(
-                user_id=user_id,
-                total=total_price,
-                status=OrderStatus.COMPLETED,
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow()
-            )
-            db.session.add(new_order)
-            db.session.flush()  # Get order.id before committing
+            user_id = metadata["user_id"]
+            products = json.loads(metadata["products"])
+            total_price = session["amount_total"] / 100  # Convert cents to CZK
+            
 
-            for item in products:
-                
-                order_item = OrderItem(
-                    order_id=new_order.id,
-                    product_id=item["id"],  # Ensure product ID exists
-                    quantity=item["quantity"],
-                    price=item["price"]
+            print(f"Creating order for user {user_id} with total {total_price} CZK")
+
+            try:
+                # Create order
+                new_order = Order(
+                    user_id=user_id,
+                    total=total_price,
+                    status=OrderStatus.COMPLETED,
                 )
-                db.session.add(order_item)
+                db.session.add(new_order)
+                db.session.flush()  # Ensure new_order.id is assigned
 
-            order_payment = OrderPayment(
-                order_id=new_order.id,
-                payment_intent=payment_intent,
-                status="paid",
-                created_at=datetime.utcnow()
-            )
-            db.session.add(order_payment)
+                # Add order items
+                for item in products:
+                    order_item = OrderItem(
+                        order_id=new_order.id,
+                        product_id=item["id"],
+                        quantity=item["quantity"],
+                        price=item["price"]
+                    )
+                    db.session.add(order_item)
 
-            db.session.commit()
-            print(f"Order {new_order.id} created for user {user_id}")
+                # Record payment
+                order_payment = OrderPayment(
+                    order_id=new_order.id,
+                    amount=total_price,                  
+                    status="paid",
+                )
+                db.session.add(order_payment)
 
-        return jsonify({"message": "Webhook received"}), 200
+                # Commit transaction
+                db.session.commit()
+                print(f"✅ Order {new_order.id} successfully created!")
 
+            except Exception as e:
+                db.session.rollback()  # Rollback on failure
+                print("❌ Database commit failed:", repr(e))
+                return jsonify({"error": "Database error"}), 500
+
+        return jsonify({"message": "Webhook processed"}), 200
+
+    except stripe.error.SignatureVerificationError as e:
+        print("❌ Signature verification failed:", str(e))
+        return jsonify({"error": "Invalid signature"}), 400
     except Exception as e:
-        print("❌ Webhook processing failed:", e)
+        print("❌ Webhook processing failed:", repr(e))
         return jsonify({"error": "Webhook processing failed"}), 400
 
 # ---------- Create Order Endpoint ----------
