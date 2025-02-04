@@ -550,7 +550,6 @@ def create_checkout_session():
                 "quantity": item["quantity"]
             })
 
-        # ✅ Create checkout session with metadata
         session = stripe.checkout.Session.create(
             payment_method_types=["card"],
             line_items=line_items,
@@ -566,7 +565,7 @@ def create_checkout_session():
         return jsonify({"url": session.url}), 200
 
     except Exception as e:
-        logger.exception("Error creating checkout session:")
+        print("Error creating checkout session:")
         return jsonify({"error": str(e)}), 500
 
 # ---------- Stripe Webhook Endpoint ----------
@@ -575,21 +574,27 @@ def stripe_webhook():
     payload = request.get_data(as_text=True)
     sig_header = request.headers.get("Stripe-Signature")
 
+    # Debugging with print statements to track payload and signature
+    print("Received webhook: Payload:", payload)
+    print("Received webhook: Stripe-Signature:", sig_header)
+
     try:
+        # Try constructing the event from the payload and signature
         event = stripe.Webhook.construct_event(
             payload, sig_header, os.getenv("STRIPE_WEBHOOK_SECRET")
         )
+        
 
-        # ✅ Check if the event is a completed checkout session
         if event["type"] == "checkout.session.completed":
+            print(os.getenv("STRIPE_WEBHOOK_SECRET"))
+            
             session = event["data"]["object"]
 
             user_id = session["metadata"]["user_id"]
             products = json.loads(session["metadata"]["products"])  # Product data from metadata
             total_price = session["amount_total"] / 100  # Convert cents to dollars
             payment_intent = session["payment_intent"]
-            
-            # ✅ Create new order
+
             new_order = Order(
                 user_id=user_id,
                 total=total_price,
@@ -600,8 +605,8 @@ def stripe_webhook():
             db.session.add(new_order)
             db.session.flush()  # Get order.id before committing
 
-            # ✅ Add order items
             for item in products:
+                
                 order_item = OrderItem(
                     order_id=new_order.id,
                     product_id=item["id"],  # Ensure product ID exists
@@ -610,7 +615,6 @@ def stripe_webhook():
                 )
                 db.session.add(order_item)
 
-            # ✅ Save payment details
             order_payment = OrderPayment(
                 order_id=new_order.id,
                 payment_intent=payment_intent,
@@ -620,12 +624,12 @@ def stripe_webhook():
             db.session.add(order_payment)
 
             db.session.commit()
-            logger.info(f"✅ Order {new_order.id} created for user {user_id}")
+            print(f"Order {new_order.id} created for user {user_id}")
 
         return jsonify({"message": "Webhook received"}), 200
 
     except Exception as e:
-        logger.exception("❌ Webhook processing failed:")
+        print("❌ Webhook processing failed:", e)
         return jsonify({"error": "Webhook processing failed"}), 400
 
 # ---------- Create Order Endpoint ----------
