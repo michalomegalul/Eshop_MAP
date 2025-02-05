@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request, render_template, make_response
-from .models import db, User, Product, Order, ProductReview, Category, OrderLike, OrderItem, OrderPayment, OrderStatus#, Coupon
+from .models import db, User, Product, Order, Category, OrderLike, OrderItem, OrderPayment, OrderStatus#, Coupon
 import os
 import json
 from flask_jwt_extended import (
@@ -573,16 +573,21 @@ def create_checkout_session():
 def stripe_webhook():
     payload = request.get_data(as_text=True)
     sig_header = request.headers.get("Stripe-Signature")
-    print("Received webhook:", payload)
 
     try:
         event = stripe.Webhook.construct_event(
             payload, sig_header, os.getenv("STRIPE_WEBHOOK_SECRET")
         )
 
-        if event["type"] == "checkout.session.completed":
-            print("Processing checkout.session.completed event")
+        # Initialize variables
+        payment_method_id = None
+        user_id = None
+        total_price = 0
+        products = []
+        order_id = None
 
+        if event["type"] == "checkout.session.succeeded":
+            print("Processing checkout.session.completed event")
             session = event["data"]["object"]
             metadata = session.get("metadata", {})
 
@@ -594,46 +599,37 @@ def stripe_webhook():
             user_id = metadata["user_id"]
             products = json.loads(metadata["products"])
             total_price = session["amount_total"] / 100  # Convert cents to CZK
-            
+            payment_method_id = session.get("payment_method")
+        
+            print("Processing payment_intent.succeeded event")
+            payment_intent = event["data"]["object"]
+            payment_method_id = payment_intent.get("payment_method")
+            user_id = payment_intent["customer"]  # Adjust as necessary
+            total_price = payment_intent["amount_received"] / 100  # Convert cents to CZK
+            products = []  # Retrieve products from metadata or other source
 
-            print(f"Creating order for user {user_id} with total {total_price} CZK")
+            if not payment_method_id:
+                print("❌ Missing payment method ID in payment_intent.succeeded")
+                return jsonify({"error": "Missing payment method ID"}), 400
 
-            try:
-                # Create order
-                new_order = Order(
-                    user_id=user_id,
-                    total=total_price,
-                    status=OrderStatus.COMPLETED,
-                )
-                db.session.add(new_order)
-                db.session.flush()  # Ensure new_order.id is assigned
-
-                # Add order items
-                for item in products:
-                    order_item = OrderItem(
-                        order_id=new_order.id,
-                        product_id=item["id"],
-                        quantity=item["quantity"],
-                        price=item["price"]
-                    )
-                    db.session.add(order_item)
-
-                # Record payment
+            # If this event comes after the order was created
+            if order_id:
+                # Retrieve the order by ID and update it
+                order = Order.query.get(order_id)
+                if not order:
+                    return jsonify({"error": "Order not found"}), 400
+                
+                # Now that we have a valid payment_method_id, update the order status and create payment
+                order.status = OrderStatus.COMPLETED
                 order_payment = OrderPayment(
-                    order_id=new_order.id,
-                    amount=total_price,                  
+                    order_id=order.id,
+                    amount=total_price,
                     status="paid",
+                    payment_method_id=payment_method_id
                 )
                 db.session.add(order_payment)
-
-                # Commit transaction
                 db.session.commit()
-                print(f"✅ Order {new_order.id} successfully created!")
-
-            except Exception as e:
-                db.session.rollback()  # Rollback on failure
-                print("❌ Database commit failed:", repr(e))
-                return jsonify({"error": "Database error"}), 500
+                print(f"✅ Order {order.id} successfully updated with payment information!")
 
         return jsonify({"message": "Webhook processed"}), 200
 
@@ -643,6 +639,8 @@ def stripe_webhook():
     except Exception as e:
         print("❌ Webhook processing failed:", repr(e))
         return jsonify({"error": "Webhook processing failed"}), 400
+
+
 
 # ---------- Create Order Endpoint ----------
 @api_bp.route("/orders", methods=["POST"])

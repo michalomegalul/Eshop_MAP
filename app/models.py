@@ -195,7 +195,7 @@ class OrderPayment(Model):
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     order_id = db.Column(UUID(as_uuid=True), db.ForeignKey("orders.id"), nullable=False)
-    payment_method_id = db.Column(UUID(as_uuid=True), nullable=True)
+    payment_method_id = db.Column(db.String(255), nullable=True)  # Changed to string
     amount = db.Column(db.Numeric(10, 2), nullable=False)
     status = db.Column(db.String(20), nullable=False, comment="Possible values: pending, completed, failed, refunded")
     transaction_id = db.Column(db.String(255), nullable=True)  # Store Stripe transaction ID here
