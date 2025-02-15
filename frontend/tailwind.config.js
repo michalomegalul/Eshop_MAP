@@ -21,8 +21,8 @@ export default {
             },
             screens: {
                 'phone': { 'max': '431px' },
-                'tablet': { 'min': '1400px' },
-                'tabletmax': { 'max': '1400px' },
+                'tablet': { 'min': '1500px' },
+                'tabletmax': { 'max': '1500px' },
                 'pc': { 'min': '1800px' },
             },
         },

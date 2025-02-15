@@ -3,5 +3,10 @@
 @tailwind utilities;
 
 #root {
-    background-color: #F5F5F5;
+    background-color: #FEF9F9;
+    padding-bottom: 4rem;
+}
+
+.dark #root {
+    background-color: #171717;
 }
