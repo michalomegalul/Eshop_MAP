@@ -7,7 +7,7 @@ from faker import Faker
 fake = Faker()
 
 # Define the API URL
-API_URL = 'http://localhost:5000/api'
+API_URL = 'http://157.245.25.143:5000/api'
 
 # Function to generate random product data using Faker
 def generate_random_product(category_id):

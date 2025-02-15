@@ -33,23 +33,12 @@ class User(db.Model):
     shopping_cart = db.relationship("ShoppingCart", backref="user", uselist=False, cascade="all, delete-orphan")
 
     def set_password(self, password: str):
-        """
-        Hashes the password and stores it in the password_hash column
-        """
-        # Hash the password using Flask-Bcrypt
         self.password_hash = bcrypt.generate_password_hash(password).decode('utf-8')
-        print(self.password_hash)  # Optional: Remove in production for security reasons
- 
+    
     def check_password(self, password: str) -> bool:
-        """
-        Checks the password against the stored hash
-        """
         return bcrypt.check_password_hash(self.password_hash, password)
 
     def to_dict(self):
-        """
-        Returns a dictionary representation of the User object
-        """
         return {
             "id": str(self.id),
             "username": self.username,
@@ -76,15 +65,15 @@ class UserAddress(Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
-# class UserPaymentMethod(Model):
-#     __tablename__ = "user_payment_methods"
+class UserPaymentMethod(Model):
+    __tablename__ = "user_payment_methods"
 
-#     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-#     user_id = db.Column(UUID(as_uuid=True), db.ForeignKey("users.id"), nullable=False)
-#     payment_type = db.Column(db.String(20), nullable=False)
-#     provider = db.Column(db.String(80), nullable=False)
-#     account_no = db.Column(db.String(120), nullable=False)
-#     expiry = db.Column(db.Date, nullable=False)
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey("users.id"), nullable=False)
+    payment_type = db.Column(db.String(20), nullable=False)
+    provider = db.Column(db.String(80), nullable=False)
+    account_no = db.Column(db.String(120), nullable=False)
+    expiry = db.Column(db.Date, nullable=False)
 
 
 class Category(Model):
@@ -163,7 +152,7 @@ class Order(db.Model):
     shipping = db.relationship("OrderShipping", backref="order", uselist=False, cascade="all, delete-orphan")
 
     def __repr__(self):
-        return f"<Order {self.id} - {self.status.value} - {self.total} USD>"
+        return f"<Order {self.id} - {self.status.value} - {self.total} CZK>"
 
 
 
@@ -195,12 +184,12 @@ class OrderPayment(Model):
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     order_id = db.Column(UUID(as_uuid=True), db.ForeignKey("orders.id"), nullable=False)
-    payment_method_id = db.Column(db.String(255), nullable=True)  # Changed to string
     amount = db.Column(db.Numeric(10, 2), nullable=False)
     status = db.Column(db.String(20), nullable=False, comment="Possible values: pending, completed, failed, refunded")
-    transaction_id = db.Column(db.String(255), nullable=True)  # Store Stripe transaction ID here
+    transaction_id = db.Column(db.String(255), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
 
 
 class OrderShipping(Model):

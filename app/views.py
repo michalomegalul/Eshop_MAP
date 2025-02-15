@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request, render_template, make_response
-from .models import db, User, Product, Order, Category, OrderLike, OrderItem, OrderPayment, OrderStatus#, Coupon
+from .models import db, User, Product, Order, Category, OrderLike, OrderItem, OrderPayment, OrderStatus, UserPaymentMethod#, Coupon
 import os
+import uuid
 import json
 from flask_jwt_extended import (
     JWTManager, create_access_token, create_refresh_token, jwt_required, get_jwt, get_jwt_identity, get_csrf_token
@@ -498,24 +499,24 @@ def delete_product(product_id):
         logger.error(f"Error deleting product {product_id}: {e}")
         return jsonify({"error": "Failed to delete product"}), 500
 
-@api_bp.route("/products/<uuid:product_id>/reviews", methods=["GET"])
-def get_product_reviews(product_id):
-    try:
-        reviews = ProductReview.query.filter_by(product_id=product_id).all()
-        reviews_data = [
-            {
-                "id": str(review.id),
-                "user_id": str(review.user_id),
-                "rating": review.rating,
-                "review_text": review.review_text,
-                "created_at": review.created_at
-            }
-            for review in reviews
-        ]
-        return jsonify(reviews_data), 200
-    except Exception as e:
-        logger.error(f"Error fetching reviews for product {product_id}: {e}")
-        return jsonify({"error": "Failed to fetch reviews"}), 500
+# @api_bp.route("/products/<uuid:product_id>/reviews", methods=["GET"])
+# def get_product_reviews(product_id):
+#     try:
+#         reviews = ProductReview.query.filter_by(product_id=product_id).all()
+#         reviews_data = [
+#             {
+#                 "id": str(review.id),
+#                 "user_id": str(review.user_id),
+#                 "rating": review.rating,
+#                 "review_text": review.review_text,
+#                 "created_at": review.created_at
+#             }
+#             for review in reviews
+#         ]
+#         return jsonify(reviews_data), 200
+#     except Exception as e:
+#         logger.error(f"Error fetching reviews for product {product_id}: {e}")
+#         return jsonify({"error": "Failed to fetch reviews"}), 500
 
 # ---------- Payment Intent Endpoint ----------
 @api_bp.route("/create-checkout-session", methods=["POST"])
@@ -569,76 +570,114 @@ def create_checkout_session():
         return jsonify({"error": str(e)}), 500
 
 # ---------- Stripe Webhook Endpoint ----------
+# @api_bp.route("/stripe/webhook", methods=["POST"])
+# def stripe_webhook():
+#     payload = request.get_data(as_text=True)
+#     sig_header = request.headers.get("Stripe-Signature")
+#     WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
+
+#     try:
+#         event = stripe.Webhook.construct_event(payload, sig_header, WEBHOOK_SECRET)
+#     except stripe.error.SignatureVerificationError as e:
+#         print(f"Webhook signature verification failed: {e}")
+#         return jsonify({"error": "Invalid signature"}), 400
+#     except Exception as e:
+#         print(f"Error parsing webhook: {e}")
+#         return jsonify({"error": str(e)}), 400
+
+#     # Print the full event for debugging
+#     print("🔹 Received Stripe Webhook Event:")
+#     print(json.dumps(event, indent=4))  # Pretty-print the JSON
+
+#     return jsonify({"status": "received", "event_type": event["type"]}), 200
+
 @api_bp.route("/stripe/webhook", methods=["POST"])
 def stripe_webhook():
     payload = request.get_data(as_text=True)
     sig_header = request.headers.get("Stripe-Signature")
+    WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
 
     try:
-        event = stripe.Webhook.construct_event(
-            payload, sig_header, os.getenv("STRIPE_WEBHOOK_SECRET")
-        )
-
-        # Initialize variables
-        payment_method_id = None
-        user_id = None
-        total_price = 0
-        products = []
-        order_id = None
-
-        if event["type"] == "checkout.session.succeeded":
-            print("Processing checkout.session.completed event")
-            session = event["data"]["object"]
-            metadata = session.get("metadata", {})
-
-            # Check if required metadata exists
-            if "user_id" not in metadata or "products" not in metadata:
-                print("❌ Missing metadata in session:", metadata)
-                return jsonify({"error": "Missing metadata"}), 400
-
-            user_id = metadata["user_id"]
-            products = json.loads(metadata["products"])
-            total_price = session["amount_total"] / 100  # Convert cents to CZK
-            payment_method_id = session.get("payment_method")
-        
-            print("Processing payment_intent.succeeded event")
-            payment_intent = event["data"]["object"]
-            payment_method_id = payment_intent.get("payment_method")
-            user_id = payment_intent["customer"]  # Adjust as necessary
-            total_price = payment_intent["amount_received"] / 100  # Convert cents to CZK
-            products = []  # Retrieve products from metadata or other source
-
-            if not payment_method_id:
-                print("❌ Missing payment method ID in payment_intent.succeeded")
-                return jsonify({"error": "Missing payment method ID"}), 400
-
-            # If this event comes after the order was created
-            if order_id:
-                # Retrieve the order by ID and update it
-                order = Order.query.get(order_id)
-                if not order:
-                    return jsonify({"error": "Order not found"}), 400
-                
-                # Now that we have a valid payment_method_id, update the order status and create payment
-                order.status = OrderStatus.COMPLETED
-                order_payment = OrderPayment(
-                    order_id=order.id,
-                    amount=total_price,
-                    status="paid",
-                    payment_method_id=payment_method_id
-                )
-                db.session.add(order_payment)
-                db.session.commit()
-                print(f"✅ Order {order.id} successfully updated with payment information!")
-
-        return jsonify({"message": "Webhook processed"}), 200
-
+        event = stripe.Webhook.construct_event(payload, sig_header, WEBHOOK_SECRET)
     except stripe.error.SignatureVerificationError as e:
-        print("❌ Signature verification failed:", str(e))
+        print(f"Webhook signature verification failed: {e}")
         return jsonify({"error": "Invalid signature"}), 400
     except Exception as e:
-        print("❌ Webhook processing failed:", repr(e))
-        return jsonify({"error": "Webhook processing failed"}), 400
+        print(f"Error parsing webhook: {e}")
+        return jsonify({"error": str(e)}), 400
+
+    # print("🔹 Received Stripe Webhook Event:", json.dumps(event, indent=4))
+
+    # Handle `checkout.session.completed`
+    if event["type"] == "checkout.session.succeeded":
+        session_data = event["data"]["object"]
+        print("Checkout session data:", session_data)
+        # Extract user ID and products from metadata
+        user_id = session_data.get("metadata", {}).get("user_id")
+        products_json = session_data.get("metadata", {}).get("products")
+        payment_method_id = session_data.get("payment_method")  # Get payment method from Stripe
+        transaction_id = session_data.get("payment_intent")  # Stripe payment intent ID
+        amount_total = session_data.get("amount_total", 0) / 100  # Convert cents to currency
+
+        if not user_id or not products_json:
+            print("❌ Missing user_id or products in metadata")
+            return jsonify({"error": "Invalid metadata"}), 400
+
+        try:
+            user_uuid = uuid.UUID(user_id)
+            products = json.loads(products_json)
+        except Exception as e:
+            print(f"❌ Error parsing metadata: {e}")
+            return jsonify({"error": "Invalid metadata format"}), 400
+
+        # ✅ Create the order
+        order = Order(
+            user_id=user_uuid,
+            total=amount_total,
+            status=OrderStatus.COMPLETED
+        )
+        db.session.add(order)
+        db.session.flush()  # Get order.id before adding items
+
+        # ✅ Create order items
+        for item in products:
+            order_item = OrderItem(
+                order_id=order.id,
+                product_id=uuid.UUID(item["id"]),
+                quantity=item["quantity"],
+                price=item["price"]
+            )
+            db.session.add(order_item)
+
+        # ✅ Store payment method if it doesn’t exist
+        existing_payment_method = UserPaymentMethod.query.filter_by(id=payment_method_id).first()
+        if not existing_payment_method:
+            new_payment_method = UserPaymentMethod(
+                id=payment_method_id,
+                user_id=user_uuid
+            )
+            db.session.add(new_payment_method)
+
+        # ✅ Create payment record
+        payment = OrderPayment(
+            order_id=order.id,
+            payment_method_id=payment_method_id,
+            amount=amount_total,
+            status="completed",
+            transaction_id=transaction_id
+        )
+        db.session.add(payment)
+
+        # ✅ Commit changes to the database
+        try:
+            db.session.commit()
+            print(f"✅ Order {order.id} successfully stored in DB.")
+        except Exception as e:
+            db.session.rollback()
+            print(f"❌ Error saving order: {e}")
+            return jsonify({"error": "Database error"}), 500
+
+    return jsonify({"status": "success"}), 200
 
 
 

@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import axios from "axios";
 import ProductCardRaw from "../components/ProductCardRaw";
 
-const BASE_URL = "http://localhost:5000/api";
+const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 interface Product {
     id: string;

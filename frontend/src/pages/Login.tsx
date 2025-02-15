@@ -4,7 +4,7 @@ import DarkModeToggle from "../components/DarkModeToggle";
 import { useAuth } from "../context/AuthContext";
 import axios from "axios";
 import InputField from "../components/InputField";
-
+const BASE_URL = import.meta.env.VITE_BASE_URL;
 function Login() {
     const [formData, setFormData] = useState({ username: "", password: "" });
     const [error, setError] = useState("");
@@ -21,7 +21,7 @@ function Login() {
     
         try {
             const response = await axios.post(
-                "http://localhost:5000/api/login",
+                `${BASE_URL}/login`,
                 formData,
                 { withCredentials: true } // Important: Ensures cookies are used
             );
