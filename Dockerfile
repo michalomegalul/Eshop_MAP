@@ -8,7 +8,7 @@ RUN poetry install --no-root
 COPY . .
 
 COPY entrypoint.sh /entrypoint.sh
-RUN apt install -y netcat-traditional
-RUN chmod +x app/entrypoint.sh
+RUN apt update && apt install -y netcat-traditional
+RUN chmod +x /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]
