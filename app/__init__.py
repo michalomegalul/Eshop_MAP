@@ -50,6 +50,7 @@ def create_app():
     app.config["JWT_COOKIE_CSRF_PROTECT"] = True
     app.config["JWT_CSRF_CHECK_FORM"] = True  
     app.config["JWT_COOKIE_SECURE"] = False
+    app.config["JWT_COOKIE_SAMESITE"] = "None"
     Migrate(app, db) 
     print("logging in")
     print("DB INITIALIZED migrations")
