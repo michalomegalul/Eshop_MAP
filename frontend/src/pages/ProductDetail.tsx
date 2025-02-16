@@ -1,41 +1,40 @@
+// pages/ProductDetail.tsx
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import axios from "axios";
+import AddToCart from "../components/AddToCart";
 
-const BASE_URL = "http://localhost:5000/api/";
+const BASE_URL = import.meta.env.REACT_APP_BASE_URL;
 
 export interface Product {
     id: string;
     name: string;
     description: string;
     price: number;
-    availability: string;
-    imageUrl: string;
-    rating: number;
+    availability: string;  
+    quantity: number;
+    imageUrl: string;      
+    rating: number;        
 }
 
 function ProductDetail() {
     const { id } = useParams();
-    const navigate = useNavigate();
     const [product, setProduct] = useState<Product | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
-    const isLoggedIn = !!localStorage.getItem("token"); // Check login status
 
     useEffect(() => {
         const fetchProduct = async () => {
+            setLoading(true);
             try {
-                // Log the product ID for debugging
                 console.log(`Fetching product from URL: ${BASE_URL}products/${id}`);
 
                 const token = localStorage.getItem("token");
-
-                // Add the token to the headers if it's present
                 const response = await axios.get(`${BASE_URL}products/${id}`, {
                     headers: token ? { Authorization: `Bearer ${token}` } : {},
                 });
 
-                console.log("Product data:", response.data); // Log response data for debugging
+                console.log("Product data:", response.data);
                 setProduct(response.data);
             } catch (error: any) {
                 console.error("Error fetching product:", error);
@@ -47,15 +46,6 @@ function ProductDetail() {
 
         fetchProduct();
     }, [id]);
-
-    const handleAddToCart = () => {
-        if (!isLoggedIn) {
-            navigate("/login"); // Redirect to login if not logged in
-        } else {
-            console.log(`Added ${product?.name} to the cart`);
-            // Add cart logic here
-        }
-    };
 
     if (loading) return <div>Loading...</div>;
     if (error) return <div>{error}</div>;
@@ -76,12 +66,7 @@ function ProductDetail() {
 
                     <p className="text-accent font-semibold">Skladem {product.availability}</p>
 
-                    <button
-                        onClick={handleAddToCart}
-                        className="mt-4 w-full bg-primary text-white text-sm font-bold py-2 rounded hover:bg-red-800 transition"
-                    >
-                        Do košíku
-                    </button>
+                    <AddToCart product={product} className="mt-4" />
                 </div>
             </div>
         </div>

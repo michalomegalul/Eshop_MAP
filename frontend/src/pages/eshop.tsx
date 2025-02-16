@@ -6,8 +6,8 @@ import Headereshop from "../components/header-eshop";
 import ProductCardRaw from "../components/ProductCardRaw";
 import Footer from "../components/footer";
 import { useScroll } from "../context/ScrollContext";
+const BASE_URL = import.meta.env.VITE_BASE_URL;
 
-const BASE_URL = 'http://localhost:5000/api/';
 
 export interface Product {
     id: string;
@@ -57,9 +57,12 @@ function Eshop() {
         const fetchProducts = async () => {
             setLoading(true);
             try {
-                const response = await axios.get(`${BASE_URL}products?page=${page}&per_page=12`, {
-                    headers: { Accept: 'application/json' }
+                const response = await axios.get(`${BASE_URL}/products`, {
+                    params: { page, per_page: 12 },
+                    headers: { Accept: "application/json" }
                 });
+                
+                
 
                 const newProducts = response.data.products.map((product: any) => ({
                     id: product.id,
