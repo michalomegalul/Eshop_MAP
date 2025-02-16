@@ -29,7 +29,7 @@ function Login() {
             console.log("Login response:", response.data);
 
             if (response.status === 200) {
-                login(); // No need to pass token manually
+                login();
                 navigate("/eshop");
             }
         } catch (err: unknown) {
@@ -42,11 +42,6 @@ function Login() {
             }
         }
     };
-
-
-
-
-
     return (
         <div className="flex items-center justify-center flex-col min-h-screen bg-gray-100 dark:bg-bgdark transition duration-300 ease-in-out">
             <div className="fixed top-5 right-5">

@@ -334,8 +334,8 @@ def login():
         refresh_token = create_refresh_token(identity=user.id, expires_delta=datetime.timedelta(days=7))
 
         response = make_response(jsonify({"message": "Login successful"}))
-        response.set_cookie("access_token", access_token, httponly=True, secure=False, samesite="Lax")
-        response.set_cookie("refresh_token", refresh_token, httponly=True, secure=False, samesite="Lax")
+        response.set_cookie("access_token", access_token, httponly=False, secure=False, samesite="Lax")
+        response.set_cookie("refresh_token", refresh_token, httponly=False, secure=False, samesite="Lax")
         response.set_cookie(
         "csrf_access_token", 
         get_csrf_token(access_token), 
