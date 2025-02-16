@@ -3,15 +3,29 @@ import { useAuth } from "../context/AuthContext";
 import { useEffect, useState } from "react";
 import SearchBar from "./SearchBar";
 
+// Define the type for the cart item
+interface CartItem {
+  quantity: number;
+  price: number;
+}
 
 function HeaderEshop() {
   const { isAuthenticated, user, logout } = useAuth();
   const [cartItemCount, setCartItemCount] = useState<number>(0);
-
-  // Fetch cart items from localStorage
+  const [cartTotalPrice, setCartTotalPrice] = useState<number>(0);
   useEffect(() => {
-    const cart = JSON.parse(localStorage.getItem("cart") || "[]");
-    setCartItemCount(cart.length);
+    const updateCart = () => {
+      const cart: CartItem[] = JSON.parse(localStorage.getItem("cart") || "[]");
+      const itemCount = cart.reduce((total, item) => total + item.quantity, 0);
+      const totalPrice = cart.reduce((total, item) => total + item.price * item.quantity, 0);
+      setCartItemCount(itemCount);
+      setCartTotalPrice(totalPrice);
+    };
+  
+    updateCart();
+  
+    window.addEventListener("storage", updateCart);
+    return () => window.removeEventListener("storage", updateCart);
   }, []);
 
   return (
@@ -45,21 +59,6 @@ function HeaderEshop() {
                   Odhlásit se
                 </button>
               </div>
-
-              {/* Orders Link */}
-              <Link to="/orders" className="text-blue-600 hover:underline">
-                My Orders
-              </Link>
-
-              {/* Cart Icon with Badge */}
-              <Link to="/cart" className="relative">
-                <img src="files/shopping-cart.png" className="h-8" alt="E-Shop" />
-                {cartItemCount > 0 && (
-                  <span className="absolute top-0 right-0 bg-red-600 text-white text-xs rounded-full px-1.5 py-0.5">
-                    {cartItemCount}
-                  </span>
-                )}
-              </Link>
             </>
           ) : (
             <>
@@ -88,10 +87,15 @@ function HeaderEshop() {
         </div>
         <div className="flex items-center space-x-8 text-sm">
           <div className="relative">
-            <button className="flex items-center space-x-2">
-              <img className="h-6" src="files/shopping-cart.png"></img>
-              <span>0 Kč</span>
-            </button>
+            <Link to="/cart" className="flex items-center space-x-2 relative">
+              <img className="h-6" src="files/shopping-cart.png" alt="Cart" />
+              <span>{cartTotalPrice.toFixed(2)} Kč</span>
+              {cartItemCount > 0 && (
+                <span className="absolute top-0 left-1 bg-red-600 text-white text-xs rounded-full px-1.5 py-0.5">
+                  {cartItemCount}
+                </span>
+              )}
+            </Link>
           </div>
         </div>
       </div>

@@ -5,6 +5,7 @@ import Dropdown from "../components/Dropdown";
 import { useAuth } from "../context/AuthContext";
 import InputField from "../components/InputField";
 
+const BASE_URL = import.meta.env.VITE_BASE_URL;
 function Register() {
     const [formData, setFormData] = useState({
         username: "",
@@ -28,10 +29,10 @@ function Register() {
         setError(null);
 
         try {
-            const response = await axios.post("http://localhost:5000/api/register", formData);
+            const response = await axios.post(`${BASE_URL}/register`, formData);
 
             if (response.status >= 200 && response.status <= 299) {
-                const loginResponse = await axios.post("http://localhost:5000/api/login", {
+                const loginResponse = await axios.post(`${BASE_URL}/login`, {
                     username: formData.username,
                     password: formData.password,
                 });

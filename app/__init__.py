@@ -18,7 +18,7 @@ from flask_cors import CORS
 
 def create_app():
     app = Flask(__name__)
-    CORS(app, origins=["http://localhost:5173", "http://localhost:8000", "http://157.245.25.143:8000"], supports_credentials=True)
+    CORS(app, origins=["http://localhost:5173", "http://localhost:8000", "http://157.245.25.143:8000"], supports_credentials=True,allow_headers=["Content-Type", "Authorization"], methods=["GET", "POST", "OPTIONS", "PUT", "DELETE"])
 
     # Set up Stripe API keys from environment variables
     stripe.api_key = os.getenv('STRIPE_SECRET_KEY')  # Secret key for backend
@@ -49,6 +49,7 @@ def create_app():
     app.config['JWT_REFRESH_COOKIE_NAME'] = 'refresh_token'
     app.config["JWT_COOKIE_CSRF_PROTECT"] = True
     app.config["JWT_CSRF_CHECK_FORM"] = True  
+    app.config["JWT_COOKIE_SECURE"] = False
     Migrate(app, db) 
     print("logging in")
     print("DB INITIALIZED migrations")

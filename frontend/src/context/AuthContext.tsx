@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import axios from "axios";
 
-const BASE_URL = import.meta.env.REACT_APP_BASE_URL;
+const BASE_URL = import.meta.env.REACT_APP_BASE_URL || "http://157.230.19.195:5000/api";
 
 interface AuthContextType {
     isAuthenticated: boolean;
@@ -27,15 +27,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const fetchUser = async () => {
         try {
-            const response = await axios.get(`${BASE_URL}/auth-check`, {
+            const response = await axios.get(`http://157.230.19.195:5000/api/auth-check`, {
                 withCredentials: true,
             });
-            setUser(response.data);
+    
+            if (response.status === 200) {
+                setUser(response.data);
+            } else {
+                logout();
+            }
         } catch (error) {
             console.error("Auth check failed:", error);
             logout();
         }
     };
+    
+    
+    
     
 
     useEffect(() => {

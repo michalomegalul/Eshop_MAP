@@ -1,6 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
-
+const BASE_URL = import.meta.env.VITE_BASE_URL;
 type CartItem = {
   id: string;
   name: string;
@@ -25,7 +25,7 @@ const CheckoutPage: React.FC = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:5000/api/create-checkout-session",
+        `${BASE_URL}/create-checkout-session`,
         { cart },
         {
           withCredentials: true,
