@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useEffect, useState } from "react";
+import SearchBar from "./SearchBar";
+
 
 function HeaderEshop() {
   const { isAuthenticated, user, logout } = useAuth();
@@ -70,6 +72,27 @@ function HeaderEshop() {
               </Link>
             </>
           )}
+        </div>
+      </div>
+
+      <div className="flex justify-between items-center py-6 px-6">
+        <div className="flex items-center space-x-4 gap-8">
+          <a href="" className='h-full flex items-center cursor-pointer hover:scale-[1.015] transition-transform duration-300'>
+            <img
+              src="files/DP-logo.png"
+              alt="Logo"
+              className='h-8'
+            />
+          </a>
+          <SearchBar />
+        </div>
+        <div className="flex items-center space-x-8 text-sm">
+          <div className="relative">
+            <button className="flex items-center space-x-2">
+              <img className="h-6" src="files/shopping-cart.png"></img>
+              <span>0 Kč</span>
+            </button>
+          </div>
         </div>
       </div>
     </header>

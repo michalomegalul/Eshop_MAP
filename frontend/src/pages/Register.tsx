@@ -1,7 +1,7 @@
 import axios from "axios";
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import DarkModeToggle from "../components/DarkModeToggle";
+import Dropdown from "../components/Dropdown";
 import { useAuth } from "../context/AuthContext";
 import InputField from "../components/InputField";
 
@@ -49,8 +49,11 @@ function Register() {
 
     return (
         <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-bgdark">
+            <div className="fixed top-5 right-5">
+                <Dropdown />
+            </div>
             <div className="w-full max-w-md p-8 bg-white dark:bg-accent rounded-lg shadow-lg">
-                <h2 className="text-2xl font-bold text-center mb-6">Register</h2>
+                <h2 className="text-2xl font-bold text-center dark:text-textdark mb-6">Register</h2>
                 <form onSubmit={handleSubmit}>
                     <InputField label="First Name" name="first_name" type="text" value={formData.first_name} onChange={handleChange} />
                     <InputField label="Last Name" name="last_name" type="text" value={formData.last_name} onChange={handleChange} />
@@ -63,11 +66,10 @@ function Register() {
                         Register
                     </button>
                 </form>
-                <p className="mt-6 text-sm text-center">
+                <p className="mt-6 text-sm text-center dark:text-textdark">
                     Already have an account? <Link to="/login" className="text-primary underline">Login here</Link>
                 </p>
             </div>
-            <DarkModeToggle />
         </div>
     );
 }

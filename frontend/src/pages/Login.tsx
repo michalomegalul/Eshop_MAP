@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import DarkModeToggle from "../components/DarkModeToggle";
+import Dropdown from "../components/Dropdown";
 import { useAuth } from "../context/AuthContext";
 import axios from "axios";
 import InputField from "../components/InputField";
@@ -18,16 +18,16 @@ function Login() {
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setError("");
-    
+
         try {
             const response = await axios.post(
                 `${BASE_URL}/login`,
                 formData,
                 { withCredentials: true } // Important: Ensures cookies are used
             );
-    
+
             console.log("Login response:", response.data);
-    
+
             if (response.status === 200) {
                 login(); // No need to pass token manually
                 navigate("/eshop");
@@ -42,13 +42,16 @@ function Login() {
             }
         }
     };
-    
-    
-    
-    
+
+
+
+
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-bgdark transition duration-300 ease-in-out">
+        <div className="flex items-center justify-center flex-col min-h-screen bg-gray-100 dark:bg-bgdark transition duration-300 ease-in-out">
+            <div className="fixed top-5 right-5">
+                <Dropdown />
+            </div>
             <div className="w-full max-w-md p-8 bg-white dark:bg-accent rounded-lg shadow-lg">
                 <h2 className="text-2xl font-bold text-center mb-6 text-textlight dark:text-bglight">
                     Login
@@ -77,7 +80,6 @@ function Login() {
                     Don't have an account? <Link to="/register" className="text-primary underline">Register here</Link>
                 </p>
             </div>
-            <DarkModeToggle />
         </div>
     );
 }
