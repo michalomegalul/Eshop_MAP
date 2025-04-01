@@ -8,10 +8,11 @@ interface AuthContextType {
     user: { id: string; role: string; name: string } | null;
     login: () => void;
     logout: () => void;
+    loading: boolean;
+    error: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
 
 export const useAuth = () => {
     const context = useContext(AuthContext);
@@ -23,42 +24,71 @@ export const useAuth = () => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<{ id: string; role: string; name: string } | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
     const isAuthenticated = !!user;
 
     const login = async () => {
         await fetchUser();
     };
 
-    const logout = () => {
-        localStorage.removeItem("access_token");
-        setUser(null);
+    const logout = async () => {
+        try {
+            await axios.post(`${BASE_URL}logout`, {}, {
+                withCredentials: true,
+            });
+        } catch (error) {
+            console.error("Logout request failed", error);
+        } finally {
+            setUser(null);
+        }
     };
 
     const fetchUser = async () => {
         try {
-            const response = await axios(`${BASE_URL}auth-check`, {
+            const response = await axios.get(`${BASE_URL}auth-check`, {
                 withCredentials: true,
-                method: "GET",
-
             });
 
             if (response.status === 200) {
                 setUser(response.data);
+                setError(null);
             } else {
                 logout();
             }
         } catch (error) {
             console.error("Auth check failed:", error);
+            setError("Unable to authenticate");
             logout();
         }
     };
 
     useEffect(() => {
-        fetchUser(); // Fetch user on initial load
+        const fetchData = async () => {
+            setLoading(true);
+            try {
+                await fetchUser();
+            } catch (err) {
+                setError("Failed to authenticate");
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
     }, []);
 
     return (
-        <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
+        <AuthContext.Provider
+            value={{
+                isAuthenticated,
+                user,
+                login,
+                logout,
+                loading,
+                error,
+            }}
+        >
             {children}
         </AuthContext.Provider>
     );

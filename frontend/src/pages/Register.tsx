@@ -6,6 +6,7 @@ import { useAuth } from "../context/AuthContext";
 import InputField from "../components/InputField";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
+
 function Register() {
     const [formData, setFormData] = useState({
         username: "",
@@ -17,8 +18,9 @@ function Register() {
     });
 
     const [error, setError] = useState<string | null>(null);
+    const [submitting, setSubmitting] = useState(false);
     const navigate = useNavigate();
-    const { login } = useAuth(); // Use AuthContext
+    const { login } = useAuth();
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -27,24 +29,35 @@ function Register() {
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setError(null);
+        setSubmitting(true);
 
         try {
             const response = await axios.post(`${BASE_URL}/register`, formData);
 
             if (response.status >= 200 && response.status <= 299) {
-                const loginResponse = await axios.post(`${BASE_URL}/login`, {
-                    username: formData.username,
-                    password: formData.password,
-                });
+                const loginResponse = await axios.post(
+                    `${BASE_URL}/login`,
+                    {
+                        username: formData.username,
+                        password: formData.password,
+                    },
+                    { withCredentials: true }
+                );
 
                 if (loginResponse.status >= 200 && loginResponse.status <= 299) {
-                    login(); // Save token in AuthContext
+                    await login(); // Fetch user info and update context
                     navigate("/eshop");
                 }
             }
-        } catch (error) {
-            console.error("Error registering user:", error);
-            setError("An error occurred. Please try again.");
+        } catch (err) {
+            console.error("Error registering user:", err);
+            if (axios.isAxiosError(err)) {
+                setError(err.response?.data?.error || "An error occurred. Please try again.");
+            } else {
+                setError("Unexpected error occurred.");
+            }
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -63,8 +76,12 @@ function Register() {
                     <InputField label="Phone Number" name="telephone" type="text" value={formData.telephone} onChange={handleChange} />
                     <InputField label="Password" name="password" type="password" value={formData.password} onChange={handleChange} />
                     {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-                    <button type="submit" className="w-full bg-primary text-white font-bold py-3 px-4 rounded-lg hover:bg-red-700">
-                        Register
+                    <button
+                        type="submit"
+                        disabled={submitting}
+                        className="w-full bg-primary text-white font-bold py-3 px-4 rounded-lg hover:bg-red-700 disabled:opacity-50"
+                    >
+                        {submitting ? "Registering..." : "Register"}
                     </button>
                 </form>
                 <p className="mt-6 text-sm text-center dark:text-textdark">

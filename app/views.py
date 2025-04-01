@@ -314,106 +314,32 @@ def delete_user(user_id):
 
 @api_bp.route("/login", methods=["POST"])
 def login():
-    """Authenticate user and return JWT in secure cookies."""
-    data = request.get_json()  # Ensure JSON parsing
-    print("Received login data:", data)  # Debugging log
+    data = request.get_json()
+    print("Received login data:", data)
 
     if not data or not data.get("username") or not data.get("password"):
-        print("Missing username or password")
         return jsonify({"error": "Missing username or password"}), 400
 
     user = User.query.filter_by(username=data["username"]).first()
-    
-    if not user:
-        print("User not found")
+
+    if not user or not user.check_password(data["password"]):
         return jsonify({"error": "Invalid username or password"}), 401
 
-    if user.check_password(data["password"]):
-        additional_claims = {"role": user.role, "name": user.first_name}  
-        access_token = create_access_token(identity=user.id, additional_claims=additional_claims, expires_delta=datetime.timedelta(minutes=15))
-        refresh_token = create_refresh_token(identity=user.id, expires_delta=datetime.timedelta(days=7))
+    additional_claims = {"role": user.role, "name": user.first_name}
+    access_token = create_access_token(identity=user.id, additional_claims=additional_claims, expires_delta=datetime.timedelta(minutes=15))
+    refresh_token = create_refresh_token(identity=user.id, expires_delta=datetime.timedelta(days=7))
 
-        response = make_response(jsonify({"message": "Login successful"}))
-        response.set_cookie("access_token", access_token, httponly=true, secure=True, samesite="None")
-        response.set_cookie("refresh_token", refresh_token, httponly=true, secure=True, samesite="None")
-        response.set_cookie(
-        "csrf_access_token", 
-        get_csrf_token(access_token), 
-        secure=True, 
-        samesite="None"
-        )
-        response.set_cookie(
-        "csrf_refresh_token", 
-        get_csrf_token(refresh_token),  
-        secure=True, 
-        samesite="None    if user.check_password(data["password"]):
-        additional_claims = {"role": user.role, "name": user.first_name}
-        access_token = create_access_token(identity=user.id, additional_claims=additional_claims, expires_delta=datetime.timedelta(minutes=15))
-        refresh_token = create_refresh_token(identity=user.id, expires_delta=datetime.timedelta(days=7))
+    response = make_response(jsonify({"message": "Login successful"}))
 
-        response = make_response(jsonify({"message": "Login successful"}))
-        response.set_cookie("access_token", access_token, httponly=true, secure=True, samesite="None")
-        response.set_cookie("refresh_token", refresh_token, httponly=true, secure=True, samesite="None")
-        response.set_cookie(
-        "csrf_access_token",
-        get_csrf_token(access_token),
-        secure=True, 
-        samesite="None"
-        )
-        response.set_cookie(
-        "csrf_refresh_token",
-        get_csrf_token(refresh_token),
-        secure=True, 
-        samesite="None"
+    # Secure cookie settings for cross-origin HTTPS
+    cookie_settings = dict(httponly=True, secure=True, samesite="None")
 
-        )
-
-        print("Login successful, tokens set")
-        return response, 200
-
-
-    print("Invalid password")
-    return jsonify({"error": "Invalid username or password"}), 401
-       secure=True, 
-        samesite="None    if user.check_password(data["password"]):
-        additional_claims = {"role": user.role, "name": user.first_name}
-        access_token = create_access_token(identity=user.id, additional_claims=additional_claims, expires_delta=datetime.timedelta(minutes=15))
-        refresh_token = create_refresh_token(identity=user.id, expires_delta=datetime.timedelta(days=7))
-
-        response = make_response(jsonify({"message": "Login successful"}))
-        response.set_cookie("access_token", access_token, httponly=True, secure=True, samesite="None")
-        response.set_cookie("refresh_token", refresh_token, httponly=True, secure=True, samesite="None")
-        response.set_cookie(
-        "csrf_access_token",
-        get_csrf_token(access_token),
-        secure=True, 
-        samesite="None"
-        )
-        response.set_cookie(
-        "csrf_refresh_token",
-        get_csrf_token(refresh_token),
-        secure=True, 
-        samesite="None"
-
-        )
-        
-        print("Login successful, tokens set")
-        return response, 200
-
-
-    print("Invalid password")
-    return jsonify({"error": "Invalid username or password"}), 401
-"
-
-        )
-
-        print("Login successful, tokens set")
-        return response, 200
-
-
-    print("Invalid password")
-    return jsonify({"error": "Invalid username or password"}), 401
-
+    response.set_cookie("access_token", access_token, **cookie_settings)
+    response.set_cookie("refresh_token", refresh_token, **cookie_settings)
+    response.set_cookie("csrf_access_token", get_csrf_token(access_token), secure=True, samesite="None")
+    response.set_cookie("csrf_refresh_token", get_csrf_token(refresh_token), secure=True, samesite="None")
+    print("Login successful, tokens set")
+    return response, 200
 
 
 @api_bp.route("/refresh", methods=["POST"])
@@ -428,25 +354,29 @@ def refresh():
 
     return response, 200
 @api_bp.route("/auth-check", methods=["GET"])
-@jwt_required() 
+@jwt_required()
 def auth_check():
-    """Check if user is authenticated and return user info."""
-    user_id = get_jwt_identity() 
+    user_id = get_jwt_identity()
     claims = get_jwt()
-
     return jsonify({
         "id": user_id,
         "role": claims.get("role"),
         "name": claims.get("name")
     }), 200
+
 @api_bp.route("/logout", methods=["POST"])
 def logout():
-    """Clear authentication cookies to log out the user."""
     response = make_response(jsonify({"message": "Logged out"}))
-    response.set_cookie("access_token", "", expires=0, httponly=True, secure=True, samesite="Strict")
-    response.set_cookie("refresh_token", "", expires=0, httponly=True, secure=True, samesite="Strict")
+
+    # Expire all auth cookies
+    expired_settings = dict(expires=0, httponly=True, secure=True, samesite="None")
+    response.set_cookie("access_token", "", **expired_settings)
+    response.set_cookie("refresh_token", "", **expired_settings)
+    response.set_cookie("csrf_access_token", "", expires=0, secure=True, samesite="None")
+    response.set_cookie("csrf_refresh_token", "", expires=0, secure=True, samesite="None")
 
     return response, 200
+
 
 
 # @api_bp.route("/protected", methods=["GET"])

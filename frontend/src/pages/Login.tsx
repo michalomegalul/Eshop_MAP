@@ -1,15 +1,25 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Dropdown from "../components/Dropdown";
 import { useAuth } from "../context/AuthContext";
 import axios from "axios";
 import InputField from "../components/InputField";
+
 const BASE_URL = import.meta.env.VITE_BASE_URL;
+
 function Login() {
     const [formData, setFormData] = useState({ username: "", password: "" });
-    const [error, setError] = useState("");
+    const [formError, setFormError] = useState("");
+    const [submitting, setSubmitting] = useState(false);
+
     const navigate = useNavigate();
-    const { login } = useAuth();
+    const { login, isAuthenticated, loading } = useAuth();
+
+    useEffect(() => {
+        if (!loading && isAuthenticated) {
+            navigate("/eshop"); // Redirect if already logged in
+        }
+    }, [isAuthenticated, loading, navigate]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -17,31 +27,40 @@ function Login() {
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        setError("");
+        setFormError("");
+        setSubmitting(true);
 
         try {
             const response = await axios.post(
                 `${BASE_URL}/login`,
                 formData,
-                { withCredentials: true } // Important: Ensures cookies are used
+                { withCredentials: true }
             );
 
-            console.log("Login response:", response.data);
-
             if (response.status === 200) {
-                login();
+                await login(); // fetch user data
                 navigate("/eshop");
             }
         } catch (err: unknown) {
             if (axios.isAxiosError(err)) {
-                console.error("Axios error:", err.response?.data || err.message);
-                setError(err.response?.data?.error || "Invalid credentials. Please try again.");
+                console.error("Login error:", err.response?.data || err.message);
+                setFormError(err.response?.data?.error || "Invalid credentials.");
             } else {
-                console.error("Unexpected error:", err);
-                setError("An unexpected error occurred.");
+                setFormError("Unexpected error occurred.");
             }
+        } finally {
+            setSubmitting(false);
         }
     };
+
+    if (loading) {
+        return (
+            <div className="min-h-screen flex justify-center items-center">
+                <p className="text-gray-500">Checking your session...</p>
+            </div>
+        );
+    }
+
     return (
         <div className="flex items-center justify-center flex-col min-h-screen bg-gray-100 dark:bg-bgdark transition duration-300 ease-in-out">
             <div className="fixed top-5 right-5">
@@ -66,13 +85,17 @@ function Login() {
                         value={formData.password}
                         onChange={handleChange}
                     />
-                    {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-                    <button type="submit" className="w-full bg-primary text-white font-bold py-3 px-4 rounded-lg hover:bg-red-700">
-                        Sign In
+                    {formError && <p className="text-red-500 text-sm mb-4">{formError}</p>}
+                    <button
+                        type="submit"
+                        disabled={submitting}
+                        className="w-full bg-primary text-white font-bold py-3 px-4 rounded-lg hover:bg-red-700 disabled:opacity-50"
+                    >
+                        {submitting ? "Signing in..." : "Sign In"}
                     </button>
                 </form>
                 <p className="mt-6 text-sm text-center text-gray-500">
-                    Don't have an account? <Link to="/register" className="text-primary underline">Register here</Link>
+                    Don&apos;t have an account? <Link to="/register" className="text-primary underline">Register here</Link>
                 </p>
             </div>
         </div>
