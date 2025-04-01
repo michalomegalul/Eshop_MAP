@@ -368,7 +368,6 @@ def auth_check():
 def logout():
     response = make_response(jsonify({"message": "Logged out"}))
 
-    # Expire all auth cookies
     expired_settings = dict(expires=0, httponly=True, secure=True, samesite="None")
     response.set_cookie("access_token", "", **expired_settings)
     response.set_cookie("refresh_token", "", **expired_settings)
@@ -376,21 +375,6 @@ def logout():
     response.set_cookie("csrf_refresh_token", "", expires=0, secure=True, samesite="None")
 
     return response, 200
-
-
-
-# @api_bp.route("/protected", methods=["GET"])
-# @jwt_required()
-# def protected():
-#     """A protected route that requires a valid JWT."""
-#     claims = get_jwt()
-#     user_role = claims.get("role", "user")
-#     user_name = claims.get("name", "unknown")
-
-#     return jsonify({"user_name": user_name, "user_role": user_role}), 200
-
-
-
 @api_bp.route("/admin", methods=["GET"])
 @jwt_required()
 def admin_page():

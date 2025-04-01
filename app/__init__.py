@@ -18,20 +18,7 @@ from flask_cors import CORS
 
 def create_app():
     app = Flask(__name__)
-    CORS(
-        app,
-        origins=[
-            "https://dobsinskym.com",
-            "https://www.dobsinskym.com",
-            "http://localhost:5173",
-            "http://localhost:8000",
-            "http://164.92.164.233:443",
-
-    ],
-        supports_credentials=True,
-        allow_headers=["Content-Type", "Authorization"],
-        methods=["GET", "POST", "OPTIONS", "PUT", "DELETE"],
-    )
+    CORS(app, origins=["https://dobsinskym.com","https://www.dobsinskym.com","http://localhost:5173", "http://localhost:8000", "http://157.245.25.143:8000"], supports_credentials=True,allow_headers=["Content-Type", "Authorization"], methods=["GET", "POST", "OPTIONS", "PUT", "DELETE"])
     # Set up Stripe API keys from environment variables
     stripe.api_key = os.getenv('STRIPE_SECRET_KEY')  # Secret key for backend
     print("STRIPE SECRET KEY")
@@ -56,13 +43,11 @@ def create_app():
     db.init_app(app)
     bcrypt.init_app(app)
     jwt.init_app(app)
-    app.config['JWT_TOKEN_LOCATION'] = ['cookies']
-    app.config['JWT_ACCESS_COOKIE_NAME'] = 'access_token'
-    app.config['JWT_REFRESH_COOKIE_NAME'] = 'refresh_token'
-    app.config["JWT_COOKIE_CSRF_PROTECT"] = True
-    app.config["JWT_CSRF_CHECK_FORM"] = True  
-    app.config["JWT_COOKIE_SECURE"] = False
     app.config["JWT_COOKIE_SAMESITE"] = "None"
+    app.config["JWT_COOKIE_SECURE"] = True
+    app.config["JWT_COOKIE_CSRF_PROTECT"] = True
+    app.config["JWT_COOKIE_DOMAIN"] = ".dobsinskym.com"
+
     Migrate(app, db) 
     print("logging in")
     print("DB INITIALIZED migrations")
