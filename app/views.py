@@ -334,19 +334,76 @@ def login():
         refresh_token = create_refresh_token(identity=user.id, expires_delta=datetime.timedelta(days=7))
 
         response = make_response(jsonify({"message": "Login successful"}))
-        response.set_cookie("access_token", access_token, httponly=False, secure=False, samesite="Lax")
-        response.set_cookie("refresh_token", refresh_token, httponly=False, secure=False, samesite="Lax")
+        response.set_cookie("access_token", access_token, httponly=true, secure=True, samesite="None")
+        response.set_cookie("refresh_token", refresh_token, httponly=true, secure=True, samesite="None")
         response.set_cookie(
         "csrf_access_token", 
         get_csrf_token(access_token), 
-        secure=False, 
-        samesite="Lax"
+        secure=True, 
+        samesite="None"
         )
         response.set_cookie(
         "csrf_refresh_token", 
         get_csrf_token(refresh_token),  
-        secure=False, 
-        samesite="Lax"
+        secure=True, 
+        samesite="None    if user.check_password(data["password"]):
+        additional_claims = {"role": user.role, "name": user.first_name}
+        access_token = create_access_token(identity=user.id, additional_claims=additional_claims, expires_delta=datetime.timedelta(minutes=15))
+        refresh_token = create_refresh_token(identity=user.id, expires_delta=datetime.timedelta(days=7))
+
+        response = make_response(jsonify({"message": "Login successful"}))
+        response.set_cookie("access_token", access_token, httponly=true, secure=True, samesite="None")
+        response.set_cookie("refresh_token", refresh_token, httponly=true, secure=True, samesite="None")
+        response.set_cookie(
+        "csrf_access_token",
+        get_csrf_token(access_token),
+        secure=True, 
+        samesite="None"
+        )
+        response.set_cookie(
+        "csrf_refresh_token",
+        get_csrf_token(refresh_token),
+        secure=True, 
+        samesite="None"
+
+        )
+
+        print("Login successful, tokens set")
+        return response, 200
+
+
+    print("Invalid password")
+    return jsonify({"error": "Invalid username or password"}), 401
+       secure=True, 
+        samesite="None    if user.check_password(data["password"]):
+        additional_claims = {"role": user.role, "name": user.first_name}
+        access_token = create_access_token(identity=user.id, additional_claims=additional_claims, expires_delta=datetime.timedelta(minutes=15))
+        refresh_token = create_refresh_token(identity=user.id, expires_delta=datetime.timedelta(days=7))
+
+        response = make_response(jsonify({"message": "Login successful"}))
+        response.set_cookie("access_token", access_token, httponly=True, secure=True, samesite="None")
+        response.set_cookie("refresh_token", refresh_token, httponly=True, secure=True, samesite="None")
+        response.set_cookie(
+        "csrf_access_token",
+        get_csrf_token(access_token),
+        secure=True, 
+        samesite="None"
+        )
+        response.set_cookie(
+        "csrf_refresh_token",
+        get_csrf_token(refresh_token),
+        secure=True, 
+        samesite="None"
+
+        )
+        
+        print("Login successful, tokens set")
+        return response, 200
+
+
+    print("Invalid password")
+    return jsonify({"error": "Invalid username or password"}), 401
+"
 
         )
 

@@ -18,7 +18,7 @@ const Sidebar = () => {
     useEffect(() => {
         const fetchCategories = async () => {
             try {
-                const response = await axios.get(`${BASE_URL}/categories`);
+                const response = await axios.get(`${BASE_URL}/categories`.replace('http://', 'https://'));
                 setCategories(response.data);
             } catch (error) {
                 console.error("Failed to fetch categories:", error);
