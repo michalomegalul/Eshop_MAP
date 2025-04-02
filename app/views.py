@@ -98,7 +98,7 @@ def get_all_products():
 #         category_id = request.args.get("category_id")
         
 #         # If category_id is provided, filter products by category
-#         if category_id:
+#         if (category_id):
 #             products = Product.query.filter_by(category_id=category_id).all()
 #         else:
 #             products = Product.query.all()
@@ -314,32 +314,37 @@ def delete_user(user_id):
 
 @api_bp.route("/login", methods=["POST"])
 def login():
-    data = request.get_json()
-    print("Received login data:", data)
-
-    if not data or not data.get("username") or not data.get("password"):
-        return jsonify({"error": "Missing username or password"}), 400
-
-    user = User.query.filter_by(username=data["username"]).first()
-
-    if not user or not user.check_password(data["password"]):
-        return jsonify({"error": "Invalid username or password"}), 401
-
-    additional_claims = {"role": user.role, "name": user.first_name}
-    access_token = create_access_token(identity=user.id, additional_claims=additional_claims, expires_delta=datetime.timedelta(minutes=15))
-    refresh_token = create_refresh_token(identity=user.id, expires_delta=datetime.timedelta(days=7))
-
-    response = make_response(jsonify({"message": "Login successful"}))
-
-    # Secure cookie settings for cross-origin HTTPS
-    cookie_settings = dict(httponly=True, secure=True, samesite="None")
-
-    response.set_cookie("access_token", access_token, **cookie_settings)
-    response.set_cookie("refresh_token", refresh_token, **cookie_settings)
-    response.set_cookie("csrf_access_token", get_csrf_token(access_token), secure=True, samesite="None")
-    response.set_cookie("csrf_refresh_token", get_csrf_token(refresh_token), secure=True, samesite="None")
-    print("Login successful, tokens set")
-    return response, 200
+    try:
+        data = request.get_json()
+        username = data.get("username")
+        password = data.get("password")
+        
+        user = User.query.filter_by(email=username).first()
+        
+        if not user or not user.verify_password(password):
+            return jsonify({"error": "Invalid credentials"}), 401
+        
+        additional_claims = {
+            "role": user.role,
+            "name": user.first_name
+        }
+        
+        access_token = create_access_token(identity=user.id, additional_claims=additional_claims)
+        refresh_token = create_refresh_token(identity=user.id)
+        
+        return jsonify({
+            "message": "Login successful",
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "user": {
+                "id": str(user.id),
+                "role": user.role,
+                "name": user.first_name
+            }
+        }), 200
+    except Exception as e:
+        logger.error(f"Login error: {e}")
+        return jsonify({"error": "Login failed"}), 500
 
 
 @api_bp.route("/refresh", methods=["POST"])
@@ -356,14 +361,18 @@ def refresh():
 @api_bp.route("/auth-check", methods=["GET"])
 @jwt_required()
 def auth_check():
-    user_id = get_jwt_identity()
-    claims = get_jwt()
-    return jsonify({
-        "id": user_id,
-        "role": claims.get("role"),
-        "name": claims.get("name")
-    }), 200
-
+    try:
+        current_user_id = get_jwt_identity()
+        claims = get_jwt()
+        
+        return jsonify({
+            "id": current_user_id,
+            "role": claims.get("role", "user"),
+            "name": claims.get("name", "")
+        }), 200
+    except Exception as e:
+        logger.error(f"Auth check error: {e}")
+        return jsonify({"error": "Authentication failed"}), 401
 @api_bp.route("/logout", methods=["POST"])
 def logout():
     response = make_response(jsonify({"message": "Logged out"}))

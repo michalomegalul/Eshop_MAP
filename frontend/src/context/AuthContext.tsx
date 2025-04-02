@@ -3,11 +3,28 @@ import axios from "axios";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL || "/api/";
 
+// Create configured axios instance
+const authApi = axios.create({
+  baseURL: BASE_URL
+});
+
+// Add an interceptor to include the token in requests
+authApi.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
 interface AuthContextType {
     isAuthenticated: boolean;
     user: { id: string; role: string; name: string } | null;
-    login: () => void;
-    logout: () => void;
+    login: (username: string, password: string) => Promise<void>;
+    logout: () => Promise<void>;
     loading: boolean;
     error: string | null;
 }
@@ -33,59 +50,63 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const isAuthenticated = !!user;
 
-    const login = async () => {
-        await fetchUser();
+    const login = async (username: string, password: string) => {
+        try {
+            setLoading(true);
+            const response = await authApi.post('/login', { username, password });
+            
+            // Store tokens
+            localStorage.setItem('access_token', response.data.access_token);
+            localStorage.setItem('refresh_token', response.data.refresh_token);
+            
+            // Set user
+            setUser(response.data.user);
+            return response.data;
+        } catch (error) {
+            console.error("Login failed:", error);
+            throw error;
+        } finally {
+            setLoading(false);
+        }
     };
 
     const logout = async () => {
         try {
-            await axios.post(`${BASE_URL}/logout`, {}, {
-                withCredentials: true,
-            });
+            // Call logout endpoint if needed
+            await authApi.post('/logout');
         } catch (error) {
             console.error("Logout request failed", error);
         } finally {
+            // Clear tokens and user state
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('refresh_token');
             setUser(null);
         }
     };
 
-    const fetchUser = async () => {
-        try {
-            const csrfToken = getCookie("csrf_access_token");
-
-            const response = await axios.get(`${BASE_URL}/auth-check`, {
-                withCredentials: true,
-                headers: {
-                    "X-CSRF-TOKEN": csrfToken || "",
-                },
-            });
-
-            if (response.status === 200) {
-                setUser(response.data);
-                setError(null);
-            } else {
-                logout();
-            }
-        } catch (error) {
-            console.error("Auth check failed:", error);
-            setError("Unable to authenticate");
-            setUser(null);
-        }        
-    };
-    
-
+    // Check if user is authenticated on component mount
     useEffect(() => {
-        const fetchData = async () => {
-            setLoading(true);
+        const checkAuth = async () => {
+            const token = localStorage.getItem('access_token');
+            if (!token) {
+                setLoading(false);
+                return;
+            }
+            
             try {
-                await fetchUser();
-            } catch (err) {
-                setError("Failed to authenticate");
+                const response = await authApi.get('/auth-check');
+                setUser(response.data);
+            } catch (error) {
+                console.error("Auth check failed:", error);
+                // Clear invalid tokens
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('refresh_token');
             } finally {
                 setLoading(false);
             }
         };
-        fetchData();
+        
+        checkAuth();
     }, []);
 
     return (

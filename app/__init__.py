@@ -18,7 +18,21 @@ from flask_cors import CORS
 
 def create_app():
     app = Flask(__name__)
-    CORS(app, origins=["https://dobsinskym.com","https://www.dobsinskym.com","http://localhost:5173", "http://localhost:8000", "http://157.245.25.143:8000"], supports_credentials=True,allow_headers=["Content-Type", "Authorization"], methods=["GET", "POST", "OPTIONS", "PUT", "DELETE"])
+    
+    # Configure app
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL", "sqlite:///eshop.db")
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "dev-secret-key")
+    app.config["JWT_ACCESS_TOKEN_EXPIRES"] = 3600  # 1 hour
+    app.config["JWT_REFRESH_TOKEN_EXPIRES"] = 2592000  # 30 days
+    
+    # Initialize extensions
+    db.init_app(app)
+    jwt.init_app(app)
+    
+    # Configure CORS to allow requests from your frontend domain
+    CORS(app, resources={r"/api/*": {"origins": ["http://localhost:5173", "https://www.dobsinskym.com"]}})
+    
     # Set up Stripe API keys from environment variables
     stripe.api_key = os.getenv('STRIPE_SECRET_KEY')  # Secret key for backend
     print("STRIPE SECRET KEY")

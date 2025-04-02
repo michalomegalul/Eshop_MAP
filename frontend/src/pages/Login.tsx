@@ -2,10 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Dropdown from "../components/Dropdown";
 import { useAuth } from "../context/AuthContext";
-import axios from "axios";
 import InputField from "../components/InputField";
-
-const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 function Login() {
     const [formData, setFormData] = useState({ username: "", password: "" });
@@ -31,23 +28,11 @@ function Login() {
         setSubmitting(true);
 
         try {
-            const response = await axios.post(
-                `${BASE_URL}/login`,
-                formData,
-                { withCredentials: true }
-            );
-
-            if (response.status === 200) {
-                await login(); // fetch user data
-                navigate("/eshop");
-            }
+            await login(formData.username, formData.password);
+            navigate("/eshop");
         } catch (err: unknown) {
-            if (axios.isAxiosError(err)) {
-                console.error("Login error:", err.response?.data || err.message);
-                setFormError(err.response?.data?.error || "Invalid credentials.");
-            } else {
-                setFormError("Unexpected error occurred.");
-            }
+            setFormError("Invalid credentials or server error");
+            console.error("Login error:", err);
         } finally {
             setSubmitting(false);
         }
