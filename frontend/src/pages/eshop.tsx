@@ -59,7 +59,8 @@ function Eshop() {
             try {
                 const response = await axios.get(`${BASE_URL}/products`, {
                     params: { page, per_page: 12 },
-                    headers: { Accept: "application/json" }
+                    headers: { Accept: "application/json" },
+                    withCredentials: true  // Add this to preserve authentication
                 });
                 
                 

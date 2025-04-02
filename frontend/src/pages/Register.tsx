@@ -32,7 +32,11 @@ function Register() {
         setSubmitting(true);
 
         try {
-            const response = await axios.post(`${BASE_URL}/register`, formData);
+            const response = await axios.post(
+                `${BASE_URL}/register`, 
+                formData,
+                { withCredentials: true } // Add this to ensure cookies can be set
+            );
 
             if (response.status >= 200 && response.status <= 299) {
                 const loginResponse = await axios.post(

@@ -1,8 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import axios from "axios";
-import Cookies from "js-cookie";
 
-const BASE_URL = "/api/";
+const BASE_URL = import.meta.env.VITE_BASE_URL || "/api/";
 
 interface AuthContextType {
     isAuthenticated: boolean;
@@ -22,7 +21,11 @@ export const useAuth = () => {
     }
     return context;
 };
-
+export function getCookie(name: string): string | null {
+    const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+    return match ? decodeURIComponent(match[2]) : null;
+  }
+  
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<{ id: string; role: string; name: string } | null>(null);
     const [loading, setLoading] = useState(true);
@@ -36,7 +39,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const logout = async () => {
         try {
-            await axios.post(`${BASE_URL}logout`, {}, {
+            await axios.post(`${BASE_URL}/logout`, {}, {
                 withCredentials: true,
             });
         } catch (error) {
@@ -48,9 +51,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const fetchUser = async () => {
         try {
-            const csrfToken = Cookies.get("csrf_access_token");
+            const csrfToken = getCookie("csrf_access_token");
 
-            const response = await axios.get(`${BASE_URL}auth-check`, {
+            const response = await axios.get(`${BASE_URL}/auth-check`, {
                 withCredentials: true,
                 headers: {
                     "X-CSRF-TOKEN": csrfToken || "",
@@ -61,14 +64,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setUser(response.data);
                 setError(null);
             } else {
-                await logout();
+                logout();
             }
         } catch (error) {
             console.error("Auth check failed:", error);
             setError("Unable to authenticate");
-            setUser(null); // Don't destroy cookies, just clear state
-        }
+            setUser(null);
+        }        
     };
+    
 
     useEffect(() => {
         const fetchData = async () => {
