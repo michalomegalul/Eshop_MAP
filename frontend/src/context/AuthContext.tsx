@@ -38,11 +38,7 @@ export const useAuth = () => {
     }
     return context;
 };
-export function getCookie(name: string): string | null {
-    const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
-    return match ? decodeURIComponent(match[2]) : null;
-  }
-  
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<{ id: string; role: string; name: string } | null>(null);
     const [loading, setLoading] = useState(true);
@@ -53,6 +49,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const login = async (username: string, password: string) => {
         try {
             setLoading(true);
+            setError(null); // Reset any previous errors
+            
             const response = await authApi.post('/login', { username, password });
             
             // Store tokens
@@ -64,6 +62,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             return response.data;
         } catch (error) {
             console.error("Login failed:", error);
+            setError("Authentication failed. Please check your credentials.");
             throw error;
         } finally {
             setLoading(false);
@@ -72,15 +71,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const logout = async () => {
         try {
+            setLoading(true);
             // Call logout endpoint if needed
             await authApi.post('/logout');
         } catch (error) {
             console.error("Logout request failed", error);
+            setError("Logout failed. Please try again.");
         } finally {
             // Clear tokens and user state
             localStorage.removeItem('access_token');
             localStorage.removeItem('refresh_token');
             setUser(null);
+            setLoading(false);
         }
     };
 
@@ -94,10 +96,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
             
             try {
+                setError(null);
                 const response = await authApi.get('/auth-check');
                 setUser(response.data);
             } catch (error) {
                 console.error("Auth check failed:", error);
+                setError("Session expired. Please login again.");
                 // Clear invalid tokens
                 localStorage.removeItem('access_token');
                 localStorage.removeItem('refresh_token');
@@ -117,7 +121,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 login,
                 logout,
                 loading,
-                error,
+                error
             }}
         >
             {children}

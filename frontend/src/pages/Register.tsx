@@ -32,26 +32,16 @@ function Register() {
         setSubmitting(true);
 
         try {
+            // Register the user
             const response = await axios.post(
                 `${BASE_URL}/register`, 
-                formData,
-                { withCredentials: true } // Add this to ensure cookies can be set
+                formData
             );
 
-            if (response.status >= 200 && response.status <= 299) {
-                const loginResponse = await axios.post(
-                    `${BASE_URL}/login`,
-                    {
-                        username: formData.username,
-                        password: formData.password,
-                    },
-                    { withCredentials: true }
-                );
-
-                if (loginResponse.status >= 200 && loginResponse.status <= 299) {
-                    await login(); // Fetch user info and update context
-                    navigate("/eshop");
-                }
+            if (response.status >= 200 && response.status < 300) {
+                // If registration successful, login with the same credentials
+                await login(formData.email, formData.password);
+                navigate("/eshop");
             }
         } catch (err) {
             console.error("Error registering user:", err);
