@@ -1,2 +1,5 @@
 node_modules
 frontend/package-lock.json
+github_action.pub
+github_action
+.~lock.github_action.pub#
