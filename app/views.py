@@ -329,19 +329,31 @@ def login():
             "name": user.first_name
         }
         
+        # Create tokens but don't return them in response body
         access_token = create_access_token(identity=user.id, additional_claims=additional_claims)
         refresh_token = create_refresh_token(identity=user.id)
         
-        return jsonify({
+        # Create response
+        response = jsonify({
             "message": "Login successful",
-            "access_token": access_token,
-            "refresh_token": refresh_token,
             "user": {
                 "id": str(user.id),
                 "role": user.role,
                 "name": user.first_name
             }
-        }), 200
+        })
+        
+        # Set tokens as cookies
+        response.set_cookie(
+            'access_token_cookie', 
+            access_token, 
+            httponly=True, 
+            secure=True, 
+            samesite='None',
+            domain='.dobsinskym.com' if request.host != 'localhost' else None
+        )
+        
+        return response, 200
     except Exception as e:
         logger.error(f"Login error: {e}")
         return jsonify({"error": "Login failed"}), 500
@@ -767,3 +779,5 @@ def like_order(order_id):
 #         logger.error(f"Error deleting coupon {coupon_id}: {e}")
 #         return jsonify({"error": "Failed to delete coupon"}), 500
 #helpers
+
+

@@ -3,9 +3,10 @@ import axios from "axios";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL || "/api/";
 
-// Create configured axios instance
+// Create configured axios instance with credentials support
 const authApi = axios.create({
-  baseURL: BASE_URL
+  baseURL: BASE_URL,
+  withCredentials: true  // Important for cookies to be sent
 });
 
 // Add an interceptor to include the token in requests
