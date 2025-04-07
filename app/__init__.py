@@ -10,11 +10,11 @@ from flask_cors import CORS
 # Inicializace rozšíření
 
 
-def has_no_empty_params(rule):
-    """Check if a rule has any empty parameters."""
-    defaults = rule.defaults if rule.defaults is not None else ()
-    arguments = rule.arguments if rule.arguments is not None else ()
-    return len(defaults) >= len(arguments)
+# def has_no_empty_params(rule):
+#     """Check if a rule has any empty parameters."""
+#     defaults = rule.defaults if rule.defaults is not None else ()
+#     arguments = rule.arguments if rule.arguments is not None else ()
+#     return len(defaults) >= len(arguments)
 
 
 def create_app():
@@ -80,27 +80,27 @@ def create_app():
     from .views import api_bp
     app.register_blueprint(api_bp, url_prefix="/api")
     
-    @app.route("/site-map")
-    def site_map():
-        """Generate a map of all available GET endpoints."""
-        links = []
-        for rule in app.url_map.iter_rules():
-            # Exclude static files and endpoints requiring parameters
-            if "GET" in rule.methods and has_no_empty_params(rule):
-                try:
-                    url = url_for(rule.endpoint, **(rule.defaults or {}))
-                    links.append({
-                        "url": url,
-                        "endpoint": rule.endpoint,
-                        "methods": list(rule.methods)
-                    })
-                except Exception as e:
-                    # Skip endpoints that can't be resolved (might need parameters)
-                    app.logger.debug(f"Skipping endpoint {rule.endpoint}: {str(e)}")
+    # @app.route("/site-map")
+    # def site_map():
+    #     """Generate a map of all available GET endpoints."""
+    #     links = []
+    #     for rule in app.url_map.iter_rules():
+    #         # Exclude static files and endpoints requiring parameters
+    #         if "GET" in rule.methods and has_no_empty_params(rule):
+    #             try:
+    #                 url = url_for(rule.endpoint, **(rule.defaults or {}))
+    #                 links.append({
+    #                     "url": url,
+    #                     "endpoint": rule.endpoint,
+    #                     "methods": list(rule.methods)
+    #                 })
+    #             except Exception as e:
+    #                 # Skip endpoints that can't be resolved (might need parameters)
+    #                 app.logger.debug(f"Skipping endpoint {rule.endpoint}: {str(e)}")
         
-        # Sort links by URL for better readability
-        links.sort(key=lambda x: x["url"])
-        return jsonify({"endpoints": links})
+    #     # Sort links by URL for better readability
+    #     links.sort(key=lambda x: x["url"])
+    #     return jsonify({"endpoints": links})
 
     return app
 
