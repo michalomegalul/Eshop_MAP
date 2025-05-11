@@ -1,6 +1,6 @@
 import requests
 import json
-REGISTER_URL = "http://localhost:5000/api/register"
+REGISTER_URL = "https://dobsinskym.com/api/register"
 # username = fake.user_name()
 #     first_name = fake.first_name()
 #     last_name = fake.last_name()

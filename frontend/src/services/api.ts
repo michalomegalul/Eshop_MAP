@@ -143,6 +143,11 @@ export const authService = {
 export const productService = {
   getAllProducts: async (params?: { page?: number; per_page?: number; category_id?: string }) => {
     const response = await api.get('/products', { params });
+    // Handle paginated response structure
+    if (response.data && response.data.products) {
+      // Return just the products array from the paginated response
+      return response.data.products;
+    }
     return response.data;
   },
   
@@ -153,11 +158,19 @@ export const productService = {
   
   searchProducts: async (query: string) => {
     const response = await api.get(`/products/search`, { params: { query } });
+    // Check if response is paginated
+    if (response.data && response.data.products) {
+      return response.data.products;
+    }
     return response.data;
   },
   
   getProductsByCategory: async (categoryId: string) => {
     const response = await api.get(`/products/category/${categoryId}`);
+    // Check if response is paginated
+    if (response.data && response.data.products) {
+      return response.data.products;
+    }
     return response.data;
   }
 };

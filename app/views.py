@@ -167,8 +167,34 @@ def get_all_products():
 @api_bp.route("/products/search", methods=["GET"])
 def search_products():
     query = request.args.get("query", "")
-    products = Product.query.filter(Product.name.ilike(f"%{query}%") | Product.description.ilike(f"%{query}%")).all()
-    return jsonify([{"id": p.id, "name": p.name} for p in products])
+    page = request.args.get("page", default=1, type=int)
+    per_page = request.args.get("per_page", default=12, type=int)
+    
+    # Use pagination for consistency with the main products endpoint
+    pagination = Product.query.filter(
+        Product.name.ilike(f"%{query}%") | Product.description.ilike(f"%{query}%")
+    ).paginate(page=page, per_page=per_page, error_out=False)
+    
+    products_data = [
+        {
+            "id": str(product.id),
+            "name": product.name,
+            "description": product.description,
+            "price": float(product.price),
+            "stock_quantity": product.stock_quantity,
+            "category_id": str(product.category_id),
+            "created_at": product.created_at,
+            "updated_at": product.updated_at
+        }
+        for product in pagination.items
+    ]
+    
+    return jsonify({
+        "products": products_data,
+        "total": pagination.total,
+        "pages": pagination.pages,
+        "current_page": pagination.page
+    }), 200
 
 @api_bp.route("/categories", methods=["GET"])
 def get_all_categories():
@@ -217,7 +243,14 @@ def get_product_by_id(product_id):
 def get_products_by_category(category_id):
     """Fetch all products belonging to a specific category."""
     try:
-        products = Product.query.filter_by(category_id=category_id).all()
+        page = request.args.get("page", default=1, type=int)
+        per_page = request.args.get("per_page", default=12, type=int)
+        
+        # Use pagination for consistency with the main products endpoint
+        pagination = Product.query.filter_by(category_id=category_id).paginate(
+            page=page, per_page=per_page, error_out=False
+        )
+        
         products_data = [
             {
                 "id": str(product.id),
@@ -229,9 +262,15 @@ def get_products_by_category(category_id):
                 "created_at": product.created_at,
                 "updated_at": product.updated_at
             }
-            for product in products
+            for product in pagination.items
         ]
-        return jsonify(products_data), 200
+        
+        return jsonify({
+            "products": products_data,
+            "total": pagination.total,
+            "pages": pagination.pages,
+            "current_page": pagination.page
+        }), 200
     except Exception as e:
         logger.error(f"Error fetching products for category {category_id}: {e}")
         return jsonify({"error": "Failed to fetch products"}), 500
