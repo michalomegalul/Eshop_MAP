@@ -47,7 +47,7 @@ export default function LoginPage() {
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <img
           className="mx-auto h-12 w-auto"
-          src="/logo-placeholder.svg"
+          src="/DP-logo.png"
           alt="Dieselpower"
         />
         <h2 className="mt-6 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">

@@ -25,14 +25,14 @@ export default function Layout() {
   return (
     <div className="bg-white">
       {/* Header */}
-      <header className="absolute inset-x-0 top-0 z-50">
+      <header className="absolute inset-x-0 top-0 z-50 bg-white bg-opacity-90">
         <nav className="flex items-center justify-between p-6 lg:px-8" aria-label="Global">
           <div className="flex lg:flex-1">
             <Link to="/" className="-m-1.5 p-1.5">
               <span className="sr-only">Dieselpower</span>
               <img
                 className="h-8 w-auto"
-                src="/logo-placeholder.svg"
+                src="/DP-logo.png"
                 alt="Dieselpower"
               />
             </Link>
@@ -49,23 +49,23 @@ export default function Layout() {
           </div>
           <div className="hidden lg:flex lg:gap-x-12">
             {navigation.map((item) => (
-              <Link key={item.name} to={item.href} className="text-sm font-semibold leading-6 text-gray-900">
+              <Link key={item.name} to={item.href} className="text-sm font-semibold leading-6 text-black hover:text-primary-500">
                 {item.name}
               </Link>
             ))}
           </div>
           <div className="hidden lg:flex lg:flex-1 lg:justify-end gap-4">
-            <Link to="/cart" className="text-sm font-semibold leading-6 text-gray-900 flex items-center">
+            <Link to="/cart" className="text-sm font-semibold leading-6 text-black hover:text-primary-500 flex items-center">
               <ShoppingCartIcon className="h-6 w-6 mr-1" aria-hidden="true" />
               <span>Cart</span>
             </Link>
             {user ? (
-              <Link to="/profile" className="text-sm font-semibold leading-6 text-gray-900 flex items-center">
+              <Link to="/profile" className="text-sm font-semibold leading-6 text-black hover:text-primary-500 flex items-center">
                 <UserIcon className="h-6 w-6 mr-1" aria-hidden="true" />
                 <span>{user.first_name || user.username}</span>
               </Link>
             ) : (
-              <Link to="/login" className="text-sm font-semibold leading-6 text-gray-900 flex items-center">
+              <Link to="/login" className="text-sm font-semibold leading-6 text-black hover:text-primary-500 flex items-center">
                 <UserIcon className="h-6 w-6 mr-1" aria-hidden="true" />
                 <span>Log in</span>
               </Link>
@@ -145,21 +145,21 @@ export default function Layout() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white">
+      <footer className="bg-black text-white">
         <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
           <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
             <div>
-              <h3 className="text-xl font-bold mb-4">Dieselpower</h3>
+              <h3 className="text-xl font-bold mb-4 text-primary-600">Dieselpower</h3>
               <p className="text-gray-300">
                 Expert auto repair services and quality parts for all your diesel engine needs.
               </p>
             </div>
             <div>
-              <h3 className="text-xl font-bold mb-4">Quick Links</h3>
+              <h3 className="text-xl font-bold mb-4 text-primary-600">Quick Links</h3>
               <ul className="space-y-2">
                 {navigation.map((item) => (
                   <li key={item.name}>
-                    <Link to={item.href} className="text-gray-300 hover:text-white">
+                    <Link to={item.href} className="text-gray-300 hover:text-primary-500">
                       {item.name}
                     </Link>
                   </li>
@@ -167,7 +167,7 @@ export default function Layout() {
               </ul>
             </div>
             <div>
-              <h3 className="text-xl font-bold mb-4">Contact Us</h3>
+              <h3 className="text-xl font-bold mb-4 text-primary-600">Contact Us</h3>
               <address className="not-italic text-gray-300">
                 <p>123 Repair Street</p>
                 <p>Engine Town, ET 12345</p>

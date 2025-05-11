@@ -37,41 +37,43 @@ export default function HomePage() {
 
   return (
     <div className="bg-white">
-      {/* Hero section */}
-      <div className="relative">
-        <div className="mx-auto max-w-7xl">
-          <div className="relative z-10 pt-14 lg:w-full lg:max-w-2xl">
-            <div className="relative px-6 py-32 sm:py-40 lg:px-8 lg:py-56 lg:pr-0">
-              <div className="mx-auto max-w-2xl lg:mx-0 lg:max-w-xl">
-                <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
-                  Expert Diesel Repair & Quality Parts
-                </h1>
-                <p className="mt-6 text-lg leading-8 text-gray-600">
-                  Welcome to Dieselpower, your trusted partner for professional diesel engine repair services and premium parts. Our experienced technicians ensure your vehicle runs at peak performance.
-                </p>
-                <div className="mt-10 flex items-center gap-x-6">
-                  <Link
-                    to="/products"
-                    className="rounded-md bg-primary-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
-                  >
-                    Browse Products
-                  </Link>
-                  <Link to="/services" className="text-sm font-semibold leading-6 text-gray-900">
-                    Our Services <span aria-hidden="true">→</span>
-                  </Link>
-                </div>
+      <div className="relative bg-gradient-to-r">
+          <div className="relative z-10 max-w-7xl mx-auto flex flex-col-reverse lg:flex-row lg:items-center">
+            {/* Text Content */}
+            <div className="px-6 py-16 lg:w-1/2 lg:py-28 lg:px-12">
+              <h1 className="text-5xl font-extrabold tracking-tight text-gray-900 sm:text-6xl">
+                Expert Diesel Repair & Quality Parts
+              </h1>
+              <p className="mt-6 text-lg leading-8 text-gray-600">
+                Welcome to Dieselpower, your trusted partner for professional diesel engine repair services and premium parts. Our experienced technicians ensure your vehicle runs at peak performance.
+              </p>
+              <div className="mt-10 flex items-center gap-x-6">
+                <Link
+                  to="/products"
+                  className="inline-block rounded-full bg-primary-600 px-6 py-3 text-sm font-bold text-white shadow-md hover:bg-primary-500 transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-600"
+                >
+                  Browse Products
+                </Link>
+                <Link
+                  to="/services"
+                  className="inline-block text-sm font-bold leading-6 text-primary-600 hover:text-primary-500 transition"
+                >
+                  Our Services <span aria-hidden="true">→</span>
+                </Link>
               </div>
+            </div>
+
+            {/* Image Section */}
+            <div className="relative lg:w-2/2">
+              <div className=""></div>
+              <img
+                className="w-full h-full object-cover rounded-lg shadow-lg"
+                src="/audi.jpg"
+                alt="Audi diesel engine repair"
+              />
             </div>
           </div>
         </div>
-        <div className="bg-gray-50 lg:absolute lg:inset-y-0 lg:right-0 lg:w-1/2">
-          <img
-            className="aspect-[3/2] object-cover lg:aspect-auto lg:h-full lg:w-full"
-            src="/audi.jpg"
-            alt="Audi diesel engine repair"
-          />
-        </div>
-      </div>
 
       {/* Featured Products section */}
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
