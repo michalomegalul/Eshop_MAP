@@ -359,15 +359,27 @@ def login():
 
 
 
-@api_bp.route("/refresh", methods=["POST"])
+@api_bp.route("/refresh", methods=["POST", "GET"])
 @jwt_required(refresh=True)  # Requires a valid refresh token
 def refresh():
     """Generate a new access token using the refresh token."""
     user_id = get_jwt_identity()
     new_access_token = create_access_token(identity=user_id)
+    
+    # Get additional claims from the user
+    user = User.query.get(user_id)
+    if user:
+        additional_claims = {"role": user.role, "name": user.first_name}
+        new_access_token = create_access_token(identity=user_id, additional_claims=additional_claims)
 
     response = make_response(jsonify({"message": "Token refreshed"}))
-    response.set_cookie("access_token", new_access_token, httponly=True, secure=True, samesite="Strict")
+    response.set_cookie("access_token", new_access_token, httponly=False, secure=False, samesite="Lax")
+    response.set_cookie(
+        "csrf_access_token", 
+        get_csrf_token(new_access_token), 
+        secure=False, 
+        samesite="Lax"
+    )
 
     return response, 200
 @api_bp.route("/auth-check", methods=["GET"])
