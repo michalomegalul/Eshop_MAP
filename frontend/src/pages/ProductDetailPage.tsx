@@ -28,6 +28,7 @@ export default function ProductDetailPage() {
       try {
         setIsLoading(true);
         const productData = await productService.getProductById(id);
+        console.log("Successfully fetched product data:", productData);
         setProduct(productData);
         setError(null);
       } catch (err) {

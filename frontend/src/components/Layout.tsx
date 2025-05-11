@@ -8,6 +8,7 @@ import {
   UserIcon 
 } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 const navigation = [
   { name: 'Home', href: '/' },
@@ -19,6 +20,7 @@ const navigation = [
 
 export default function Layout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user } = useAuth();
   
   return (
     <div className="bg-white">
@@ -57,10 +59,17 @@ export default function Layout() {
               <ShoppingCartIcon className="h-6 w-6 mr-1" aria-hidden="true" />
               <span>Cart</span>
             </Link>
-            <Link to="/login" className="text-sm font-semibold leading-6 text-gray-900 flex items-center">
-              <UserIcon className="h-6 w-6 mr-1" aria-hidden="true" />
-              <span>Log in</span>
-            </Link>
+            {user ? (
+              <Link to="/profile" className="text-sm font-semibold leading-6 text-gray-900 flex items-center">
+                <UserIcon className="h-6 w-6 mr-1" aria-hidden="true" />
+                <span>{user.first_name || user.username}</span>
+              </Link>
+            ) : (
+              <Link to="/login" className="text-sm font-semibold leading-6 text-gray-900 flex items-center">
+                <UserIcon className="h-6 w-6 mr-1" aria-hidden="true" />
+                <span>Log in</span>
+              </Link>
+            )}
           </div>
         </nav>
         <Dialog as="div" className="lg:hidden" open={mobileMenuOpen} onClose={setMobileMenuOpen}>
@@ -106,13 +115,23 @@ export default function Layout() {
                   >
                     Cart
                   </Link>
-                  <Link
-                    to="/login"
-                    className="-mx-3 block rounded-lg px-3 py-2.5 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Log in
-                  </Link>
+                  {user ? (
+                    <Link
+                      to="/profile"
+                      className="-mx-3 block rounded-lg px-3 py-2.5 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      {user.first_name || user.username}
+                    </Link>
+                  ) : (
+                    <Link
+                      to="/login"
+                      className="-mx-3 block rounded-lg px-3 py-2.5 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Log in
+                    </Link>
+                  )}
                 </div>
               </div>
             </div>

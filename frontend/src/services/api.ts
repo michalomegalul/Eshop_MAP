@@ -152,8 +152,13 @@ export const productService = {
   },
   
   getProductById: async (id: string) => {
-    const response = await api.get(`/products/${id}`);
-    return response.data;
+    try {
+      const response = await api.get(`/products/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching product ${id}:`, error);
+      throw error;
+    }
   },
   
   searchProducts: async (query: string) => {

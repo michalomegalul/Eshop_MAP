@@ -67,8 +67,8 @@ export default function HomePage() {
         <div className="bg-gray-50 lg:absolute lg:inset-y-0 lg:right-0 lg:w-1/2">
           <img
             className="aspect-[3/2] object-cover lg:aspect-auto lg:h-full lg:w-full"
-            src="https://images.unsplash.com/photo-1607400201515-c2c41c07d307?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80"
-            alt="Diesel engine repair"
+            src="/audi.jpg"
+            alt="Audi diesel engine repair"
           />
         </div>
       </div>
