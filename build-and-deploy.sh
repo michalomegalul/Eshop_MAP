@@ -34,7 +34,27 @@ echo "🛠️ Updating Nginx configurations with domain name..."
 sed -i 's/server_name localhost;/server_name dobsinskym.com www.dobsinskym.com;/g' frontend/nginx.conf
 sed -i 's/server_name localhost;/server_name dobsinskym.com www.dobsinskym.com;/g' nginx.conf
 
-# 3. Build the frontend
+# 3. Fix the backend Flask app
+echo "🔧 Fixing Flask app initialization..."
+if grep -q "CCORS" ./app/__init__.py; then
+  echo "⚠️ Found 'CCORS' typo in __init__.py, fixing..."
+  sed -i 's/CCORS/CORS/g' ./app/__init__.py
+fi
+
+# Check if app is properly initialized
+if ! grep -q "app = Flask(__name__)" ./app/__init__.py; then
+  echo "⚠️ Flask app not properly initialized, fixing..."
+  sed -i 's/def create_app():/def create_app():\n    app = Flask(__name__)/g' ./app/__init__.py
+fi
+
+# 4. Fix TypeScript configuration
+echo "🔧 Setting TypeScript configuration for compatibility..."
+if grep -q '"verbatimModuleSyntax": true' ./frontend/tsconfig.app.json; then
+  echo "⚠️ Found verbatimModuleSyntax: true, setting to false..."
+  sed -i 's/"verbatimModuleSyntax": true/"verbatimModuleSyntax": false/g' ./frontend/tsconfig.app.json
+fi
+
+# 5. Build the frontend
 echo "🏗️ Building the frontend..."
 cd frontend
 

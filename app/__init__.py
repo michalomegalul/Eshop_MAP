@@ -18,10 +18,15 @@ from flask_cors import CORS
 
 def create_app():
     app = Flask(__name__)
-    CCORS(app, origins=["http://localhost:5173", "http://localhost:8000", "http://157.245.25.143:8000"], 
-     supports_credentials=True,
-     allow_headers=["Content-Type", "Authorization"], 
-     methods=["GET", "POST", "OPTIONS", "PUT", "DELETE"])
+    
+    CORS(app, origins=[
+       "http://localhost:5173", 
+       "http://localhost:8000", 
+       "https://dobsinskym.com",
+       "https://www.dobsinskym.com"
+    ], supports_credentials=True,
+       allow_headers=["Content-Type", "Authorization", "X-CSRF-TOKEN"], 
+       methods=["GET", "POST", "OPTIONS", "PUT", "DELETE"])
 
     # Set up Stripe API keys from environment variables
     stripe.api_key = os.getenv('STRIPE_SECRET_KEY')  # Secret key for backend
