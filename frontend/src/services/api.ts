@@ -55,6 +55,17 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       
+      // Check if we're making an auth-related request - don't try to refresh for these
+      const isAuthRequest = originalRequest.url?.includes('/login') || 
+                            originalRequest.url?.includes('/register') || 
+                            originalRequest.url === '/auth-check';
+
+      // Skip token refresh for auth requests and public endpoints
+      if (isAuthRequest) {
+        console.log('Auth request failed - not attempting refresh');
+        return Promise.reject(error);
+      }
+
       try {
         // Call refresh token endpoint - using GET since the backend expects GET
         // Include withCredentials to ensure cookies are sent
@@ -76,15 +87,12 @@ api.interceptors.response.use(
         };
         console.error('Token refresh failed:', refreshError);
         
-        // Check for specific errors
-        if (refreshError.response?.status === 401) {
+        // Check for specific errors - but don't redirect for initial auth requests
+        if (refreshError.response?.status === 401 && !isAuthRequest) {
           console.log('Session expired, redirecting to login');
           // If refresh fails due to auth, redirect to login with a return URL
           const currentPath = window.location.pathname;
           window.location.href = `/login?returnUrl=${encodeURIComponent(currentPath)}`;
-        } else {
-          // For other types of errors, just redirect to login
-          window.location.href = '/login';
         }
         return Promise.reject(refreshError);
       }
@@ -123,18 +131,8 @@ export const authService = {
       const response = await api.get('/auth-check');
       return response.data;
     } catch (error: any) {
-      if (error.response?.status === 401) {
-        // Try to refresh the token if unauthorized
-        try {
-          await api.get('/refresh');
-          // If refresh succeeds, try auth check again
-          const retryResponse = await api.get('/auth-check');
-          return retryResponse.data;
-        } catch (refreshError) {
-          console.error('Token refresh during auth check failed:', refreshError);
-          return null;
-        }
-      }
+      // Don't attempt token refresh during auth check - this avoids unnecessary
+      // refresh attempts when user is not logged in
       console.error('Auth check error:', error);
       return null;
     }

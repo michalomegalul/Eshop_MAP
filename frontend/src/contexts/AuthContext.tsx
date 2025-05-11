@@ -72,12 +72,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Set up periodic token refresh (every 14 minutes)
     // This helps keep the session alive if the user is active
     const refreshInterval = setInterval(async () => {
+      // Only attempt refresh if we have a valid user session
       if (user) {
         try {
           // Use the API directly to avoid setting loading state for background refreshes
-          await authService.checkAuth();
+          const userData = await authService.checkAuth();
+          if (!userData) {
+            // If checkAuth returns null, the session is invalid
+            setUser(null);
+          }
         } catch (err) {
           console.error('Background token refresh failed:', err);
+          // Don't clear user on network errors to avoid disrupting user experience
+          // on temporary connectivity issues
         }
       }
     }, 14 * 60 * 1000); // 14 minutes
