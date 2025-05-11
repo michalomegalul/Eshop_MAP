@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { productService } from '../services/api';
+import { getProductImageUrl, getCEOImageUrl, getFallbackImageUrl } from '../utils/imageUtils';
 
 interface Product {
   id: string;
@@ -107,9 +108,14 @@ export default function HomePage() {
               <div key={product.id} className="group relative">
                 <div className="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-80">
                   <img
-                    src={`https://source.unsplash.com/random/300x300/?engine,parts&sig=${product.id}`}
+                    src={getProductImageUrl()}
                     alt={product.name}
-                    className="h-full w-full object-cover object-center lg:h-full lg:w-full"
+                    className="h-full w-full object-contain object-center lg:h-full lg:w-full"
+                    onError={(e) => {
+                      // If image fails to load, use fallback
+                      const target = e.target as HTMLImageElement;
+                      target.src = getFallbackImageUrl();
+                    }}
                   />
                 </div>
                 <div className="mt-4 flex justify-between">
@@ -220,8 +226,13 @@ export default function HomePage() {
                   <div className="flex-shrink-0">
                     <img
                       className="h-10 w-10 rounded-full bg-gray-300"
-                      src={`https://source.unsplash.com/random/100x100/?portrait&sig=${index}`}
-                      alt=""
+                      src={index === 0 ? getCEOImageUrl() : `/dan.jpg`}
+                      alt={testimonial.author}
+                      onError={(e) => {
+                        // If image fails to load, use fallback
+                        const target = e.target as HTMLImageElement;
+                        target.src = getFallbackImageUrl();
+                      }}
                     />
                   </div>
                   <div className="ml-3">

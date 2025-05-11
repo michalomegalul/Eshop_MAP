@@ -4,6 +4,7 @@ import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { TrashIcon } from '@heroicons/react/24/outline';
 import { orderService } from '../services/api';
+import { getProductImageUrl, getFallbackImageUrl } from '../utils/imageUtils';
 
 export default function CartPage() {
   const { items, updateQuantity, removeItem, totalItems, totalPrice } = useCart();
@@ -115,9 +116,14 @@ export default function CartPage() {
                   <li key={item.product_id} className="flex py-6 sm:py-10">
                     <div className="flex-shrink-0">
                       <img
-                        src={item.image_url || `https://source.unsplash.com/random/300x300/?engine,parts&sig=${item.product_id}`}
+                        src={item.image_url || getProductImageUrl()}
                         alt={item.name}
-                        className="h-24 w-24 rounded-md object-cover object-center sm:h-48 sm:w-48"
+                        className="h-24 w-24 rounded-md object-contain object-center sm:h-48 sm:w-48"
+                        onError={(e) => {
+                          // If image fails to load, use fallback
+                          const target = e.target as HTMLImageElement;
+                          target.src = getFallbackImageUrl();
+                        }}
                       />
                     </div>
 

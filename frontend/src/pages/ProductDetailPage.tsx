@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
 import { productService } from '../services/api';
+import { getProductImageUrl, getFallbackImageUrl } from '../utils/imageUtils';
 
 interface Product {
   id: string;
@@ -52,7 +53,7 @@ export default function ProductDetailPage() {
       name: product.name,
       price: product.price,
       quantity,
-      image_url: `https://source.unsplash.com/random/600x400/?engine,parts&sig=${product.id}`
+      image_url: getProductImageUrl()
     });
   };
 
@@ -133,9 +134,14 @@ export default function ProductDetailPage() {
             <div className="lg:col-span-1 lg:self-center">
               <div className="overflow-hidden rounded-lg">
                 <img
-                  src={`https://source.unsplash.com/random/600x400/?engine,parts&sig=${product.id}`}
+                  src={getProductImageUrl()}
                   alt={product.name}
-                  className="h-full w-full object-cover object-center"
+                  className="h-full w-full object-contain object-center"
+                  onError={(e) => {
+                    // If image fails to load, use fallback
+                    const target = e.target as HTMLImageElement;
+                    target.src = getFallbackImageUrl();
+                  }}
                 />
               </div>
             </div>

@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request, render_template, make_response
+from flask import Blueprint, jsonify, request, render_template, make_response, Response
 from .models import db, User, Product, Order, Category, OrderLike, OrderItem, OrderPayment, OrderStatus, UserPaymentMethod#, Coupon
 import os
 from uuid import UUID
@@ -9,6 +9,7 @@ from flask_jwt_extended import (
 import datetime
 import stripe
 import logging
+import requests
 logger = logging.getLogger(__name__)
 jwt = JWTManager()
 api_bp = Blueprint("api", __name__)
@@ -23,6 +24,48 @@ api_bp = Blueprint("api", __name__)
 @api_bp.route("/ping", methods=["GET"])
 def ping():
     return "pong"
+
+@api_bp.route("/random-image", methods=["GET"])
+def random_image():
+    """Proxy endpoint for random images from API Ninjas"""
+    api_key = os.getenv("API_NINJAS_KEY", "YOUR_DEFAULT_API_KEY")  # Replace with your actual API key
+    width = request.args.get("width", 640)
+    height = request.args.get("height", 480)
+    category = request.args.get("category", None)
+    
+    api_url = 'https://api.api-ninjas.com/v1/randomimage'
+    params = {}
+    
+    if category:
+        params["category"] = category
+    if width:
+        params["width"] = width
+    if height:
+        params["height"] = height
+    
+    headers = {
+        'X-Api-Key': api_key,
+        'Accept': 'image/jpg'
+    }
+    
+    try:
+        response = requests.get(api_url, headers=headers, params=params, stream=True)
+        if response.status_code == 200:
+            # Return the image directly to the client
+            return Response(
+                response.content,
+                content_type="image/jpg",
+                headers={
+                    "Cache-Control": "no-cache, no-store, must-revalidate",
+                    "Pragma": "no-cache",
+                    "Expires": "0"
+                }
+            )
+        else:
+            # If API Ninjas returns an error, return a fallback image or error
+            return jsonify({"error": f"Image API error: {response.status_code}"}), response.status_code
+    except Exception as e:
+        return jsonify({"error": f"Failed to fetch image: {str(e)}"}), 500
 # def site_map():
 #     links = []
 #     for rule in api_bp.url_map.iter_rules():
@@ -98,7 +141,7 @@ def get_all_products():
 #         category_id = request.args.get("category_id")
         
 #         # If category_id is provided, filter products by category
-#         if category_id:
+#         if (category_id):
 #             products = Product.query.filter_by(category_id=category_id).all()
 #         else:
 #             products = Product.query.all()
@@ -166,17 +209,10 @@ def get_product_by_id(product_id):
         }
         
         return jsonify(product_data), 200
-    
-
     except Exception as e:
         logger.error(f"Error fetching product {product_id}: {e}")
         print(f"Error fetching product {product_id}: {e}")
         return jsonify({"error": "Failed to fetch product"}), 500
-    
-
-
-
-
 @api_bp.route("/products/category/<uuid:category_id>", methods=["GET"])
 def get_products_by_category(category_id):
     """Fetch all products belonging to a specific category."""
