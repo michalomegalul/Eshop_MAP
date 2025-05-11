@@ -66,7 +66,8 @@ api.interceptors.response.use(
         
         // Retry the original request
         return api(originalRequest);
-      } catch (refreshError) {
+      } catch (error) {
+        const refreshError = error as { response?: { status?: number } };
         console.error('Token refresh failed:', refreshError);
         
         // Check for specific errors
