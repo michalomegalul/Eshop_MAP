@@ -1,56 +1,74 @@
-import { HashRouter as Router, Routes, Route } from 'react-router-dom'
-// import { lazy, Suspense } from 'react'
-import Home from './pages/home'
-import Cenik from './pages/cenik'
-import Eshop from './pages/eshop'
-import Iflash from './pages/iflash'
-import Register from "./pages/Register";
-import Login from './pages/Login'
-import ProductDetail from "./pages/ProductDetail";
-import CartPage from './pages/CartPage'
-import CategoryPage from './pages/CategoryPage'
-import CheckoutPage from './pages/CheckoutPage'
-import SuccessPage from './pages/SuccessPage'
-import CancelPage from './pages/CancelPage'
-import OrdersPage from './pages/OrdersPage'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import Layout from './components/Layout';
+import HomePage from './pages/HomePage';
+import ProductsPage from './pages/ProductsPage';
+import ProductDetailPage from './pages/ProductDetailPage';
+import CartPage from './pages/CartPage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import ProfilePage from './pages/ProfilePage';
+import CheckoutSuccessPage from './pages/CheckoutSuccessPage';
+import CheckoutCancelPage from './pages/CheckoutCancelPage';
+import ProtectedRoute from './components/ProtectedRoute';
+import ErrorBoundary from './components/ErrorBoundary';
+import { AuthProvider } from './contexts/AuthContext';
+import { CartProvider } from './contexts/CartContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 
-// const LazyHome = lazy(() => import('./pages/home'));
-// const LazyCenik = lazy(() => import('./pages/cenik'));
-// const LazyEshop = lazy(() => import('./pages/eshop'));
-// const LazyIflash = lazy(() => import('./pages/iflash'));
-// const LazyRegister = lazy(() => import('./pages/Register'));
-// const LazyLogin = lazy(() => import('./pages/Login'));
-// const LazyProductDetail = lazy(() => import('./pages/ProductDetail'));
-// const LazyCartPage = lazy(() => import('./pages/CartPage'));
-// const LazyCategoryPage = lazy(() => import('./pages/CategoryPage'));
-// const LazyCheckoutPage = lazy(() => import('./pages/CheckoutPage'));
-// const LazySuccessPage = lazy(() => import('./pages/SuccessPage'));
-
-// const SuspenseFallback = () => <div>Loading...</div>;
-
+// Create a client
+const queryClient = new QueryClient();
 
 function App() {
   return (
-    <>
-      <Router>
-        <Routes>
-          <Route path='/' element={<Home />} />
-          <Route path='/cenik' element={<Cenik />} />
-          <Route path='/eshop' element={<Eshop />} />
-          <Route path="/product/:id" element={<ProductDetail />} />
-          <Route path="/cart" element={<CartPage />} />
-          <Route path="/checkout" element={<CheckoutPage />} />
-          <Route path="/category/:categoryId" element={<CategoryPage />} />
-          <Route path='/iflash' element={<Iflash />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/success" element={<SuccessPage />} />
-          <Route path="/cancel" element={<CancelPage />} />
-          <Route path="/order" element={<OrdersPage />} />
-        </Routes>
-      </Router>
-    </>
-  )
+    <QueryClientProvider client={queryClient}>
+      <ErrorBoundary>
+        <NotificationProvider>
+          <AuthProvider>
+            <CartProvider>
+              <Router>
+              <Routes>
+                <Route path="/" element={<Layout />}>
+                  <Route index element={<HomePage />} />
+                  <Route path="products" element={<ProductsPage />} />
+                  <Route path="products/:id" element={<ProductDetailPage />} />
+                  <Route path="cart" element={<CartPage />} />
+                  <Route path="login" element={<LoginPage />} />
+                  <Route path="register" element={<RegisterPage />} />
+                  <Route path="checkout/success" element={<CheckoutSuccessPage />} />
+                  <Route path="checkout/cancel" element={<CheckoutCancelPage />} />
+                  <Route 
+                    path="profile" 
+                    element={
+                      <ProtectedRoute>
+                        <ProfilePage />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  {/* Admin routes */}
+                  <Route
+                    path="admin/*"
+                    element={
+                      <ProtectedRoute requireAdmin={true}>
+                        {/* Admin components will be added later */}
+                        <div className="p-10">
+                          <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+                          <p>Admin features coming soon</p>
+                        </div>
+                      </ProtectedRoute>
+                    }
+                  />
+                  {/* 404 route */}
+                  <Route path="*" element={<div className="p-10 text-center"><h1 className="text-2xl">Page not found</h1></div>} />
+                </Route>
+              </Routes>
+            </Router>
+            </CartProvider>
+          </AuthProvider>
+        </NotificationProvider>
+      </ErrorBoundary>
+    </QueryClientProvider>
+  );
 }
 
-export default App
+export default App;
