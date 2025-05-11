@@ -29,24 +29,22 @@ services:
     networks:
       - app-network
 
+  # Combined frontend + nginx service for simplicity
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    depends_on:
-      - backend
-    networks:
-      - app-network
-
-  nginx:
-    image: nginx:alpine
     ports:
       - "80:80"
       - "443:443"
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./frontend/dist:/usr/share/nginx/html:ro
-      - ./ssl:/etc/nginx/ssl:ro  # Make sure your SSL certificates are in this directory
+      - ./ssl:/etc/nginx/ssl:ro  # SSL certificates
+      # No need to mount frontend/dist since it's already copied in the Dockerfile
+    depends_on:
+      - backend
+    networks:
+      - app-network
     depends_on:
       - frontend
       - backend

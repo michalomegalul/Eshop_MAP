@@ -76,6 +76,12 @@ else
   echo "✅ Frontend built successfully."
 fi
 
+# Make sure public assets are available in dist
+if [ ! -f "dist/logo-placeholder.svg" ] && [ -f "public/logo-placeholder.svg" ]; then
+  echo "📂 Copying public assets to dist directory..."
+  cp -r public/* dist/
+fi
+
 cd ..
 
 # 4. Build and start Docker containers

@@ -21,11 +21,14 @@ FROM nginx:alpine
 # Copy the build output from the previous stage
 COPY --from=build /app/dist /usr/share/nginx/html
 
+# Copy the public directory for static assets that are not processed by Vite
+COPY --from=build /app/public /usr/share/nginx/html
+
 # Copy custom nginx config with SSL and security headers
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Expose port 80
-EXPOSE 80
+# Expose ports 80 and 443
+EXPOSE 80 443
 
 # Start nginx
 CMD ["nginx", "-g", "daemon off;"]
