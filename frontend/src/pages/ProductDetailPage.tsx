@@ -9,8 +9,12 @@ interface Product {
   name: string;
   description: string;
   price: number;
-  stock_quantity: number;
+  stock_quantity?: number;
+  availability: string;
+  rating?: number;
   category_id: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export default function ProductDetailPage() {
@@ -183,9 +187,9 @@ export default function ProductDetailPage() {
                     className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
                     value={quantity}
                     onChange={handleQuantityChange}
-                    disabled={product.stock_quantity === 0}
+                    disabled={product.availability !== "In Stock"}
                   >
-                    {[...Array(Math.min(10, product.stock_quantity)).keys()].map((i) => (
+                    {[...Array(10).keys()].map((i) => (
                       <option key={i + 1} value={i + 1}>
                         {i + 1}
                       </option>

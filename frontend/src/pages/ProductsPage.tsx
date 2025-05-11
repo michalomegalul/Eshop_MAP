@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { productService, categoryService } from '../services/api';
 import { useCart } from '../contexts/CartContext';
-import { getProductImageUrl, getFallbackImageUrl } from '../utils/imageUtils';
 
 interface Product {
   id: string;
@@ -95,7 +94,7 @@ export default function ProductsPage() {
       name: product.name,
       price: product.price,
       quantity: 1,
-      image_url: getProductImageUrl()
+      image_url: `https://source.unsplash.com/random/300x300/?engine,parts&sig=${product.id}`
     });
   };
 
@@ -175,14 +174,9 @@ export default function ProductsPage() {
               <div key={product.id} className="group relative">
                 <div className="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-80">
                   <img
-                    src={getProductImageUrl()}
+                    src={`https://source.unsplash.com/random/300x300/?engine,parts&sig=${product.id}`}
                     alt={product.name}
-                    className="h-full w-full object-contain object-center lg:h-full lg:w-full"
-                    onError={(e) => {
-                      // If image fails to load, use fallback
-                      const target = e.target as HTMLImageElement;
-                      target.src = getFallbackImageUrl();
-                    }}
+                    className="h-full w-full object-cover object-center lg:h-full lg:w-full"
                   />
                 </div>
                 <div className="mt-4">

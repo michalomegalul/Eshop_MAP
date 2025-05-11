@@ -14,7 +14,11 @@ export default function CartPage() {
   const [error, setError] = useState<string | null>(null);
 
   const handleCheckout = async () => {
+    // Log authentication state for debugging
+    console.log('Current user state:', user);
+    
     if (!user) {
+      console.log('User not authenticated, redirecting to login');
       // Redirect to login if not logged in
       navigate('/login', { state: { from: '/cart' } });
       return;
@@ -24,6 +28,7 @@ export default function CartPage() {
     setError(null);
 
     try {
+      console.log('Processing checkout for user:', user.username);
       const checkoutItems = items.map(item => ({
         product_id: item.product_id,
         quantity: item.quantity
@@ -32,10 +37,16 @@ export default function CartPage() {
       const response = await orderService.createCheckoutSession(checkoutItems);
       
       // Redirect to Stripe checkout
-      window.location.href = response.url;
+      if (response && response.url) {
+        console.log('Redirecting to checkout URL:', response.url);
+        window.location.href = response.url;
+      } else {
+        console.error('Invalid checkout response:', response);
+        setError('Invalid checkout response from server. Please try again.');
+      }
     } catch (err: any) {
       console.error('Checkout error:', err);
-      setError('An error occurred during checkout. Please try again.');
+      setError(`Checkout failed: ${err.response?.data?.error || err.message || 'Unknown error'}`);
     } finally {
       setIsProcessing(false);
     }
@@ -209,7 +220,7 @@ export default function CartPage() {
                   onClick={handleCheckout}
                   disabled={isProcessing}
                 >
-                  {isProcessing ? 'Processing...' : user ? 'Proceed to Checkout' : 'Sign in to Checkout'}
+                  {isProcessing ? 'Processing...' : (user ? 'Proceed to Checkout' : 'Sign in to Checkout')}
                 </button>
               </div>
 
