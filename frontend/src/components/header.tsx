@@ -48,7 +48,7 @@ const Header = () => {
     return (
         <header className='flex h-[70px] relative items-center justify-between tabletmax:px-6 px-20 tabletmax:justify-between bg-bglight dark:bg-bgdark text-textlight dark:text-textdark' >
             <div className='flex items-center justify-start h-full gap-20'>
-                <a href="" className='h-full flex items-center left-1/3 pl-14 absolute phone:left-1/2 phone:pl-0 tablet:left-0 tablet:relative cursor-pointer hover:scale-[1.015] transition-transform duration-300'>
+                <a href="" className='h-full flex items-center tabletmax:left-1/2 tabletmax:absolute cursor-pointer hover:scale-[1.015] transition-transform duration-300'>
                     <img
                         src={isMobile ? "files/dp-logo-small.png" : isDarkMode ? "files/DP-logo-white.png" : "files/DP-logo.png"}
                         alt="Logo"
@@ -78,24 +78,24 @@ const Header = () => {
                 >
                     <ul className="flex flex-col gap-0 w-full tablet:flex-row tablet:gap-14">
                         <Link to="/iflash">
-                            <Nav link="" item="iFlash" onClick={() => setIsOpen(false)} />
+                            <Nav link="/iflash" item="iFlash" onClick={() => setIsOpen(false)} />
                         </Link>
-                        <Link to="/iflash">
-                            <Nav link="" item="Chiptuning" onClick={() => setIsOpen(false)} />
+                        <Link to="/#">
+                            <Nav link="/#" item="Chiptuning" onClick={() => setIsOpen(false)} />
                         </Link>
-                        <Link to="/iflash">
-                            <Nav link="" item="Recenze" onClick={() => setIsOpen(false)} />
+                        <Link to="/#">
+                            <Nav link="/#" item="Recenze" onClick={() => setIsOpen(false)} />
                         </Link>
-                        <Link to="/cenik">
-                            <Nav link="" item="Ceník" onClick={() => setIsOpen(false)} />
+                        <Link to="/#">
+                            <Nav link="/#" item="Ceník" onClick={() => setIsOpen(false)} />
                         </Link>
-                        <Link to="/iflash">
-                            <Nav link="" item="Produkty" onClick={() => setIsOpen(false)} />
+                        <Link to="/#">
+                            <Nav link="/#" item="Produkty" onClick={() => setIsOpen(false)} />
                         </Link>
 
                         <Nav link="https://dieselpower.cz/forum/" item="Fórum" onClick={() => setIsOpen(false)} target="_blank" rel="noopener noreferrer" />
 
-                        <Nav link="#team" item="Kontakt" onClick={() => setIsOpen(false)} />
+                        <Nav link="/#/team" item="Kontakt" onClick={() => setIsOpen(false)} />
                     </ul>
                     <a href='/#/eshop' target="_blank" rel="noopener noreferrer" className='tablet:hidden flex items-center bg-primary text-textdark px-6 py-3 gap-4 font-semibold rounded-[3px] mt-4 hover:bg-red-800 transition-all duration-300'>
                         <img className='h-5' src="/files/icon-shop.png" alt="" />

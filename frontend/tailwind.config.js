@@ -20,7 +20,8 @@ export default {
                 bgdark: '#171717',
             },
             screens: {
-                'phone': { 'max': '431px' },
+                'phone': { 'min': '431px' },
+                'headline': { 'min' : '900px'},
                 'tablet': { 'min': '1500px' },
                 'tabletmax': { 'max': '1500px' },
                 'pc': { 'min': '1800px' },
