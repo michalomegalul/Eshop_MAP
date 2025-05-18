@@ -50,7 +50,7 @@ const Header = () => {
             <div className='flex items-center justify-start h-full gap-20'>
                 <a href="" className='h-full flex items-center tabletmax:left-1/2 tabletmax:absolute cursor-pointer hover:scale-[1.015] transition-transform duration-300'>
                     <img
-                        src={isMobile ? "files/dp-logo-small.png" : isDarkMode ? "files/DP-logo-white.png" : "files/DP-logo.png"}
+                        src={isMobile ? "/files/DP-logo-small.png" : isDarkMode ? "/files/DP-logo-white.png" : "files/DP-logo.png"}
                         alt="Logo"
                         className='h-[42%]'
                     />
