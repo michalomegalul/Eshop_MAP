@@ -20,6 +20,17 @@ services:
     depends_on:
       - backend
 
+  download-service:
+    build:
+      context: ./download-service
+      dockerfile: Dockerfile
+    container_name: eshop-download-service
+    restart: always
+    volumes:
+      - ./download-service/files:/app/files
+    ports:
+      - "5050:5050"  # Exposing download service port
+
   db:
     image: postgres:13
     restart: always
@@ -42,6 +53,7 @@ services:
     depends_on:
       - backend
       - frontend
+      - download-service
 
   pgadmin:
     image: dpage/pgadmin4
